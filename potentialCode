@@ -1,0 +1,35 @@
+circle at cursor as well as highlighting
+**look at checkIntersection()**
+https://threejs.org/examples/#webgl_decals
+
+hightlighting
+https://threejs.org/examples/#webgl_interactive_cubes
+
+circle at curser 
+https://threejs.org/examples/#webgl_interactive_raycasting_points
+
+physics 
+https://threejs.org/examples/?q=terrain#physics_ammo_terrain
+
+terrain generation
+https://threejs.org/examples/?q=terrain#webgl_geometry_terrain_raycast
+
+terrain generation (the algorithm we saw in class with the squares)
+http://www.playfuljs.com/realistic-terrain-in-130-lines/
+
+ehhhh maybe for terrain
+https://github.com/IceCreamYou/THREE.Terrain
+
+fade with distance
+https://threejs.org/examples/?q=terrain#webgl_geometry_terrain
+
+making a person for the shadow
+https://tympanus.net/codrops/2021/10/04/creating-3d-characters-in-three-js/
+
+tesselation (maybe good for terrain or trees?)
+https://threejs.org/examples/#webgl_modifier_tessellation
+
+tree stuff 
+https://en.wikipedia.org/wiki/L-system
+
+ 
