@@ -96,31 +96,31 @@
             let sunLight = sun.bulbLight;
             let sunMaterial = sun.bulbMat;
             if(moonLight.position.y > 4){
-                console.log("highest");
+                renderer.setClearColor(skyColors[0]);
                 moonLight.intensity = .8;
             }
             else if(3 <= moonLight.position.y && moonLight.position.y < 4){
-                console.log("high");
+                renderer.setClearColor(skyColors[1]);
                 moonLight.intensity = .7;
             }
             else if(2 <= moonLight.position.y && moonLight.position.y < 3){
-                console.log("mid");
                 moonLight.intensity = .6;
             }
             else if(1 <= moonLight.position.y && moonLight.position.y < 2){
-                console.log("low");
+                renderer.setClearColor(skyColors[2]);
                 moonLight.intensity = .5;
             }
             else if(moonLight.position.y < 1){
-                console.log("lowest");
                 moonLight.intensity = .4;
             }
 
             if(sunLight.position.y > 4){
+                renderer.setClearColor(skyColors[5]);
                 sunLight.color.setHex(sunColors[0]);
                 sunMaterial.emissive.set(sunColors[0]);
             }
             else if(3 <= sunLight.position.y && sunLight.position.y < 4){
+                renderer.setClearColor(skyColors[4]);
                 sunLight.color.setHex(sunColors[1]);
                 sunMaterial.emissive.set(sunColors[1]);
             }
@@ -129,6 +129,7 @@
                 sunMaterial.emissive.set(sunColors[2]);
             }
             else if(1 <= sunLight.position.y && sunLight.position.y < 2){
+                renderer.setClearColor(skyColors[3]);
                 sunLight.color.setHex(sunColors[3]);
                 sunMaterial.emissive.set(sunColors[3]);
             }
@@ -136,10 +137,6 @@
                 sunLight.color.setHex(sunColors[4]);
                 sunMaterial.emissive.set(sunColors[4]);
             }
-
-        
-            //sunset
-            //sunrise
 
         }
 
