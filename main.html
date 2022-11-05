@@ -92,6 +92,37 @@
         }
 
 
+        function checkPositions(sun, moon){
+            if(moon.position.y > 4){
+                console.log("highest");
+                moon.intensity = .8;
+            }
+            else if(3 <= moon.position.y && moon.position.y < 4){
+                console.log("high");
+                moon.intensity = .7;
+            }
+            else if(2 <= moon.position.y && moon.position.y < 3){
+                console.log("mid");
+                moon.intensity = .6;
+            }
+            else if(1 <= moon.position.y && moon.position.y < 2){
+                console.log("low");
+                moon.intensity = .5;
+            }
+            else if(moon.position.y < 1){
+                console.log("lowest");
+                moon.intensity = .4;
+            }
+
+        
+            //sunset
+            //sunrise
+
+        }
+
+
+
+
         function render() {
             updateSize();
             requestAnimationFrame(render);
@@ -105,6 +136,7 @@
             // We need to translate the object back to the origin before rotating it:
             rotateAboutWorldAxis(sun, new THREE.Vector3(0.0, 0.0, 1.0),  turnSpeed*.05);
             rotateAboutWorldAxis(moon, new THREE.Vector3(0.0, 0.0, 1.0),  turnSpeed*.05);
+            checkPositions(sun, moon);
 
             
 
