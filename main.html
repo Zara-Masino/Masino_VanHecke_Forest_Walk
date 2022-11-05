@@ -46,29 +46,28 @@
         //Src : https://threejs.org/examples/?q=light#webgl_lights_physical
 
 
-        function makeLights(hexCode, x, y, z) {
+        function makeLights(hexCode, x, y, z, intensity) {
             //Creates a sphere and pointlight and adds them both to the scene
             renderer.setClearColor(0x000608);
-            const bulbGeometry = new THREE.SphereGeometry(0.4, 32, 16);
-            let bulbLight = new THREE.PointLight(hexCode, .5, 100); //Creates point light
+            this.bulbGeometry = new THREE.SphereGeometry(0.4, 32, 16);
+            this.bulbLight = new THREE.PointLight(hexCode, intensity, 100); //Creates point light
             //color of the light being directed
-            let bulbMat = new THREE.MeshStandardMaterial({ //Creates bulb material for the light
+            this.bulbMat = new THREE.MeshStandardMaterial({ //Creates bulb material for the light
                 emissive: hexCode, //color of the bulb
                 emissiveIntensity: 1,
                 color: 0xffff00
             });
-            bulbLight.add(new THREE.Mesh(bulbGeometry, bulbMat)); //Adds bulb geometry and bulb light to the point light
-            bulbLight.position.set(x, y, z); //Positions the bulblight 
-            bulbLight.castShadow = true; //Casts shadow from the bulb light
-            scene.add(bulbLight); //Adds bulb light to the scene
-            return bulbLight;
+            this.bulbLight.add(new THREE.Mesh(this.bulbGeometry, this.bulbMat)); //Adds bulb geometry and bulb light to the point light
+            this.bulbLight.position.set(x, y, z); //Positions the bulblight 
+            this.bulbLight.castShadow = true; //Casts shadow from the bulb light
+            scene.add(this.bulbLight); //Adds bulb light to the scene
         }
 
         // makeLights(0xacdef3, 0);
 
         //makeLights(skyColors[4], 4);
-        let moon = makeLights(moonColor[0], -4, -5, 0);
-        let sun = makeLights(sunColors[4], 4, 5, 0);
+        let moon = new makeLights(moonColor[0], -4, -5, 0, .1);
+        let sun = new makeLights(sunColors[4], 4, 5, 0, 1);
 
 
 
@@ -93,25 +92,49 @@
 
 
         function checkPositions(sun, moon){
-            if(moon.position.y > 4){
+            let moonLight = moon.bulbLight; 
+            let sunLight = sun.bulbLight;
+            let sunMaterial = sun.bulbMat;
+            if(moonLight.position.y > 4){
                 console.log("highest");
-                moon.intensity = .8;
+                moonLight.intensity = .8;
             }
-            else if(3 <= moon.position.y && moon.position.y < 4){
+            else if(3 <= moonLight.position.y && moonLight.position.y < 4){
                 console.log("high");
-                moon.intensity = .7;
+                moonLight.intensity = .7;
             }
-            else if(2 <= moon.position.y && moon.position.y < 3){
+            else if(2 <= moonLight.position.y && moonLight.position.y < 3){
                 console.log("mid");
-                moon.intensity = .6;
+                moonLight.intensity = .6;
             }
-            else if(1 <= moon.position.y && moon.position.y < 2){
+            else if(1 <= moonLight.position.y && moonLight.position.y < 2){
                 console.log("low");
-                moon.intensity = .5;
+                moonLight.intensity = .5;
             }
-            else if(moon.position.y < 1){
+            else if(moonLight.position.y < 1){
                 console.log("lowest");
-                moon.intensity = .4;
+                moonLight.intensity = .4;
+            }
+
+            if(sunLight.position.y > 4){
+                sunLight.color.setHex(sunColors[0]);
+                sunMaterial.emissive.set(sunColors[0]);
+            }
+            else if(3 <= sunLight.position.y && sunLight.position.y < 4){
+                sunLight.color.setHex(sunColors[1]);
+                sunMaterial.emissive.set(sunColors[1]);
+            }
+            else if(2 <= sunLight.position.y && sunLight.position.y < 3){
+                sunLight.color.setHex(sunColors[2]);
+                sunMaterial.emissive.set(sunColors[2]);
+            }
+            else if(1 <= sunLight.position.y && sunLight.position.y < 2){
+                sunLight.color.setHex(sunColors[3]);
+                sunMaterial.emissive.set(sunColors[3]);
+            }
+            else if(sunLight.position.y < 1){
+                sunLight.color.setHex(sunColors[4]);
+                sunMaterial.emissive.set(sunColors[4]);
             }
 
         
@@ -134,8 +157,8 @@
             
 
             // We need to translate the object back to the origin before rotating it:
-            rotateAboutWorldAxis(sun, new THREE.Vector3(0.0, 0.0, 1.0),  turnSpeed*.05);
-            rotateAboutWorldAxis(moon, new THREE.Vector3(0.0, 0.0, 1.0),  turnSpeed*.05);
+            rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0),  turnSpeed*.05);
+            rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0),  turnSpeed*.05);
             checkPositions(sun, moon);
 
             
