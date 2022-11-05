@@ -16,11 +16,11 @@
         var scene = new THREE.Scene();
 
         let sunColors = [0xf7e2ba, 0xffdaa8,0xf8cb7c, 0xfdb25b, 0xfa9e4d];
-        //0xffb42a sun set yellow/orange
-        //0xf7e2ba midday very white
-        //0xf8cb7c in between sunset and midday
-        //0xfa9e4d sunset official orange
-        //0xffbe85 light orange
+      
+        let moonColor = [0xdde2e5 ];
+        let skyColors = [0x000608,0x072f41, 0x094f6d,0x436e91, 0x5e88b8, 0x7998bb];
+
+       
         var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
         camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0));
         scene.add(camera);
@@ -44,6 +44,7 @@
 
         function makeLights(hexCode, x) {
             //Creates a sphere and pointlight and adds them both to the scene
+            renderer.setClearColor(0x000608);
             const bulbGeometry = new THREE.SphereGeometry(0.4, 32, 16);
             let bulbLight = new THREE.PointLight(hexCode, 0, 100); //Creates point light
             //color of the light being directed
@@ -58,11 +59,15 @@
             scene.add(bulbLight); //Adds bulb light to the scene
         }
 
-        makeLights(sunColors[0], -3);
-        makeLights(sunColors[1], -1.5);
-        makeLights(sunColors[2], 0);
-        makeLights(sunColors[3], 1.5);
-        makeLights(sunColors[4], 3);
+       // makeLights(0xacdef3, 0);
+
+       //makeLights(skyColors[4], 4);
+        makeLights(moonColor[0], -1.5);
+        makeLights(skyColors[1], 0);
+        makeLights(skyColors[2], 1.5);
+        makeLights(skyColors[3], 3);
+        makeLights(skyColors[4], 4);
+        makeLights(skyColors[5], 6);
 
 
 
