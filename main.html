@@ -15,7 +15,12 @@
 
         var scene = new THREE.Scene();
 
-
+        let sunColors = [0xf7e2ba, 0xffdaa8,0xf8cb7c, 0xfdb25b, 0xfa9e4d];
+        //0xffb42a sun set yellow/orange
+        //0xf7e2ba midday very white
+        //0xf8cb7c in between sunset and midday
+        //0xfa9e4d sunset official orange
+        //0xffbe85 light orange
         var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
         camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0));
         scene.add(camera);
@@ -34,8 +39,36 @@
             controls.lock();
         });
 
+        //Src : https://threejs.org/examples/?q=light#webgl_lights_physical
+
+
+        function makeLights(hexCode, x) {
+            //Creates a sphere and pointlight and adds them both to the scene
+            const bulbGeometry = new THREE.SphereGeometry(0.4, 32, 16);
+            let bulbLight = new THREE.PointLight(hexCode, 0, 100); //Creates point light
+            //color of the light being directed
+            let bulbMat = new THREE.MeshStandardMaterial({ //Creates bulb material for the light
+                emissive: hexCode, //color of the bulb
+                emissiveIntensity: 1,
+                color: 0xffff00
+            });
+            bulbLight.add(new THREE.Mesh(bulbGeometry, bulbMat)); //Adds bulb geometry and bulb light to the point light
+            bulbLight.position.set(x, 3, -2); //Positions the bulblight 
+            bulbLight.castShadow = true; //Casts shadow from the bulb light
+            scene.add(bulbLight); //Adds bulb light to the scene
+        }
+
+        makeLights(sunColors[0], -3);
+        makeLights(sunColors[1], -1.5);
+        makeLights(sunColors[2], 0);
+        makeLights(sunColors[3], 1.5);
+        makeLights(sunColors[4], 3);
+
+
+
+
         const geometry = new THREE.PlaneGeometry(10, 10);
-        const material = new THREE.MeshBasicMaterial({ color: 0x90EE90, side: THREE.DoubleSide });
+        const material = new THREE.MeshPhongMaterial({ color: 0x90EE90, side: THREE.DoubleSide });
         const plane = new THREE.Mesh(geometry, material);
         plane.position.set(0.0, -0.5, 0.0);
         plane.rotation.x = Math.PI / 2;
