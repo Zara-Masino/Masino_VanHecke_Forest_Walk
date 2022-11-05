@@ -22,6 +22,7 @@
 
         var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
         camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0));
+        camera.position.set(0,2,10);
         scene.add(camera);
 
         var renderer = new THREE.WebGLRenderer({ canvas: myCanvas, antialias: true });
@@ -41,11 +42,11 @@
         //Src : https://threejs.org/examples/?q=light#webgl_lights_physical
 
 
-        function makeLights(hexCode, x) {
+        function makeLights(hexCode, x, y, z) {
             //Creates a sphere and pointlight and adds them both to the scene
             renderer.setClearColor(0x000608);
             const bulbGeometry = new THREE.SphereGeometry(0.4, 32, 16);
-            let bulbLight = new THREE.PointLight(hexCode, 0, 100); //Creates point light
+            let bulbLight = new THREE.PointLight(hexCode, .5, 100); //Creates point light
             //color of the light being directed
             let bulbMat = new THREE.MeshStandardMaterial({ //Creates bulb material for the light
                 emissive: hexCode, //color of the bulb
@@ -53,7 +54,7 @@
                 color: 0xffff00
             });
             bulbLight.add(new THREE.Mesh(bulbGeometry, bulbMat)); //Adds bulb geometry and bulb light to the point light
-            bulbLight.position.set(x, 3, -2); //Positions the bulblight 
+            bulbLight.position.set(x, y, z); //Positions the bulblight 
             bulbLight.castShadow = true; //Casts shadow from the bulb light
             scene.add(bulbLight); //Adds bulb light to the scene
             return bulbLight;
@@ -62,12 +63,8 @@
         // makeLights(0xacdef3, 0);
 
         //makeLights(skyColors[4], 4);
-        let moon = makeLights(moonColor[0], -1.5);
-        makeLights(skyColors[1], 0);
-        makeLights(skyColors[2], 1.5);
-        makeLights(skyColors[3], 3);
-        makeLights(skyColors[4], 4);
-        makeLights(skyColors[5], 6);
+        let moon = makeLights(moonColor[0], -4, -5, 0);
+        let sun = makeLights(sunColors[4], 4,5, 0);
 
 
 
@@ -90,11 +87,12 @@
             object.position.z = newPos.z;
         }
 
-      
+
         function render() {
             requestAnimationFrame(render); // call it again!
 
             // We need to translate the object back to the origin before rotating it:
+            rotateAboutWorldAxis(sun, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * 0.1);
             rotateAboutWorldAxis(moon, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * 0.1);
             // Rotate while we rotate:
             //moon.rotateX(turnSpeed * 0.1);
