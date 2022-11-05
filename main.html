@@ -19,11 +19,15 @@
         let moonColor = [0xdde2e5];
         let skyColors = [0x000608, 0x072f41, 0x094f6d, 0x436e91, 0x5e88b8, 0x7998bb];
 
+        let windowWidth = window.innerWidth;
+        let windowHeight = window.innerHeight;
+
 
         var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
         camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0));
-        camera.position.set(0,2,10);
+        camera.position.set(0, 2, 10);
         scene.add(camera);
+        let previousTime = performance.now();
 
         var renderer = new THREE.WebGLRenderer({ canvas: myCanvas, antialias: true });
         renderer.setClearColor(0xADD8E6);
@@ -64,7 +68,7 @@
 
         //makeLights(skyColors[4], 4);
         let moon = makeLights(moonColor[0], -4, -5, 0);
-        let sun = makeLights(sunColors[4], 4,5, 0);
+        let sun = makeLights(sunColors[4], 4, 5, 0);
 
 
 
@@ -89,11 +93,21 @@
 
 
         function render() {
-            requestAnimationFrame(render); // call it again!
+            updateSize();
+            requestAnimationFrame(render);
+
+            const time = performance.now();
+
+            const delta = time - previousTime;
+
+            
 
             // We need to translate the object back to the origin before rotating it:
-            rotateAboutWorldAxis(sun, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * 0.1);
-            rotateAboutWorldAxis(moon, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * 0.1);
+            rotateAboutWorldAxis(sun, new THREE.Vector3(0.0, 0.0, 1.0),  turnSpeed*.05);
+            rotateAboutWorldAxis(moon, new THREE.Vector3(0.0, 0.0, 1.0),  turnSpeed*.05);
+
+            
+
             // Rotate while we rotate:
             //moon.rotateX(turnSpeed * 0.1);
 
@@ -109,11 +123,22 @@
             // requestAnimationFrame(animate);
             // renderer.render(scene, camera);
 
-
-
+            previousTime = time;
             renderer.render(scene, camera);
         }
 
+
+         //source: https://threejs.org/examples/webgl_multiple_views.html
+        //This function updates the window width and height variables to the actual width and height of the computer
+        //regardless of whether the console has been opened or not
+        function updateSize() {
+            if (windowWidth != window.innerWidth || windowHeight != window.innerHeight) { //If the window width or height has
+                //actually been changed than this if statement is triggered
+                windowWidth = window.innerWidth;
+                windowHeight = window.innerHeight;
+                renderer.setSize(windowWidth, windowHeight);
+            }
+        }
 
 
 
