@@ -213,21 +213,14 @@
         function calcDistance(point, shape) {
             //This calculates the distance of two points based on the distance formula
             const distance = Math.sqrt(
-                (point.x - shape.object.position.x) * (point.x - shape.object.position.x) +
-                (point.y - shape.object.position.y) * (point.y - shape.object.position.y) +
-                (point.z - shape.object.position.z) * (point.z - shape.object.position.z)
+                (point.x - shape.position.x) * (point.x - shape.position.x) +
+                (point.y - shape.position.y) * (point.y - shape.position.y) +
+                (point.z - shape.position.z) * (point.z - shape.position.z)
             )
             return distance; //Returns distance
         }
 
-        function calulateSize(point, shape) {
-            let distance = calcDistance(point, shape); //Calculates distance between camera position and an object
-            if (distance > 300) {//If they are too far away from one another then the object relocates the shape to be within bounds
-                relocateShape(shape); //Relocates shape
-            };
-        }
-
-
+       
         function animate() {
 
             requestAnimationFrame(animate);
@@ -366,6 +359,14 @@
 
 
            raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
+           console.log('distance', calcDistance(camera.position, sphere));
+           let distance = calcDistance(camera.position, sphere);
+
+            sphere.scale.set(distance*.5,distance*.5,distance*.5);
+       
+
+           
+           
 
             const intersections = raycaster.intersectObjects(worldItems, false);
             intersection = (intersections.length) > 0 ? intersections[0] : null;
