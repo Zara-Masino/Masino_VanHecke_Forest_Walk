@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>Walk in Forest</title>
+    <title>Three.js Geometries Example</title>
 </head>
 
 <body>
@@ -17,7 +17,9 @@
         let raycaster = new THREE.Raycaster();
 
         const pointer = new THREE.Vector2();
+        let INTERSECTED;
         const spheres = [];
+        const spheresIndex = 0;
         let worldItems = [];
 
         let intersection = null;
@@ -33,6 +35,53 @@
         let prevTime = performance.now();
         const velocity = new THREE.Vector3();
         const direction = new THREE.Vector3();
+        const vertex = new THREE.Vector3();
+        const color = new THREE.Color();
+
+
+        let sunColors = [0xf7e2ba, 0xffdaa8, 0xf8cb7c, 0xfdb25b, 0xfa9e4d];
+        let moonColor = [0xdde2e5];
+        let skyColors = [0x000608, 0x072f41, 0x094f6d, 0x436e91, 0x5e88b8, 0x7998bb];
+
+        let windowWidth = window.innerWidth;
+        let windowHeight = window.innerHeight;
+
+
+        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
+        camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0));
+        camera.position.set(0, 4, 10);
+        scene.add(camera);
+        let previousTime = performance.now();
+
+        var renderer = new THREE.WebGLRenderer({ canvas: myCanvas, antialias: true });
+        renderer.setClearColor(0xADD8E6);
+        // If you want this to span the window, instead of using the myCanvas object, use the window object
+        renderer.setPixelRatio(document.getElementById('myCanvas').devicePixelRatio);
+        // If you want the render to span the window, uncomment this
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.BasicShadowMap;
+      
+
+
+        var controls = new PointerLockControls(camera, document.body);
+
+        document.addEventListener('click', function () {
+            controls.lock();
+        });
+
+
+
+        document.addEventListener('mousemove', onPointerMove);
+
+
+        function onPointerMove(event) {
+
+            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+            pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+        }
+
 
 
         const sphereGeometry = new THREE.SphereGeometry(0.02, 16, 16);
@@ -41,6 +90,7 @@
         const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
         scene.add(sphere);
         spheres.push(sphere);
+
 
 
         var world = new THREE.BoxGeometry(20, 20, 20);
@@ -55,76 +105,13 @@
 
 
 
-
-        const geometry = new THREE.PlaneGeometry(10, 10);
-        const material = new THREE.MeshPhongMaterial({ color: 0x90EE90, side: THREE.DoubleSide });
-        const plane = new THREE.Mesh(geometry, material);
-        plane.position.set(0.0, -0.5, 0.0);
-        plane.rotation.x = Math.PI / 2;
-        scene.add(plane);
-        worldItems.push(plane);
-        let turnSpeed = .1;
-
-
-        let sunColors = [0xf7e2ba, 0xffdaa8, 0xf8cb7c, 0xfdb25b, 0xfa9e4d];
-        let moonColor = [0xdde2e5];
-        let skyColors = [0x000608, 0x072f41, 0x094f6d, 0x436e91, 0x5e88b8, 0x7998bb];
-
-        let windowWidth = window.innerWidth;
-        let windowHeight = window.innerHeight;
-
-
-        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
-        camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0));
-        camera.position.set(0, 2, 10);
-        scene.add(camera);
-        let previousTime = performance.now();
-
-        var renderer = new THREE.WebGLRenderer({ canvas: myCanvas, antialias: true });
-        renderer.setClearColor(0xADD8E6);
-        // If you want this to span the window, instead of using the myCanvas object, use the window object
-        renderer.setPixelRatio(document.getElementById('myCanvas').devicePixelRatio);
-        // If you want the render to span the window, uncomment this
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        //renderer.shadowMap.enable = true;
-
-
-
-        //source: https://threejs.org/examples/webgl_multiple_views.html
-        //This function updates the window width and height variables to the actual width and height of the computer
-        //regardless of whether the console has been opened or not
-        function updateSize() {
-            if (windowWidth != window.innerWidth || windowHeight != window.innerHeight) { //If the window width or height has
-                //actually been changed than this if statement is triggered
-                windowWidth = window.innerWidth;
-                windowHeight = window.innerHeight;
-                renderer.setSize(windowWidth, windowHeight);
-            }
-        }
-
-
-        var controls = new PointerLockControls(camera, document.body);
-
-        document.addEventListener('click', function () {
-            controls.lock();
-        });
-
-        document.addEventListener('mousemove', onPointerMove);
-
-
-        function onPointerMove(event) {
-            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-            pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
-        }
-
-
         function makeLights(hexCode, x, y, z, intensity) {
             //Creates a sphere and pointlight and adds them both to the scene
             renderer.setClearColor(0x000608);
             this.bulbGeometry = new THREE.SphereGeometry(0.4, 32, 16);
             this.bulbLight = new THREE.PointLight(hexCode, intensity, 100); //Creates point light
             //color of the light being directed
-            this.bulbMat = new THREE.MeshStandardMaterial({ //Creates bulb material for the light
+            this.bulbMat = new THREE.MeshPhongMaterial({ //Creates bulb material for the light
                 emissive: hexCode, //color of the bulb
                 emissiveIntensity: 1,
                 color: 0xffff00
@@ -132,16 +119,32 @@
             this.bulbLight.add(new THREE.Mesh(this.bulbGeometry, this.bulbMat)); //Adds bulb geometry and bulb light to the point light
             this.bulbLight.position.set(x, y, z); //Positions the bulblight 
             this.bulbLight.castShadow = true; //Casts shadow from the bulb light
+            this.bulbLight.shadow.bias = - 0.0005; // reduces self-shadowing on double-sided objects
+            // this.bulbLight.shadow.mapSize.width = 2048;
+            // this.bulbLight.shadow.mapSize.height = 2048;
             scene.add(this.bulbLight); //Adds bulb light to the scene
         }
 
+        // makeLights(0xacdef3, 0);
 
+        //makeLights(skyColors[4], 4);
         let moon = new makeLights(moonColor[0], -4, -5, 0, .1);
         let sun = new makeLights(sunColors[4], 4, 5, 0, 1);
         worldItems.push(sun.bulbLight);
         worldItems.push(moon.bulbLight);
 
 
+        const geometry = new THREE.PlaneGeometry(10, 10);
+        const material = new THREE.MeshPhongMaterial({ color: 0x90EE90, side: THREE.DoubleSide });
+        const plane = new THREE.Mesh(geometry, material);
+        plane.position.set(0.0, -0.5, 0.0);
+        
+        plane.rotation.x -= Math.PI/2;
+        scene.add(plane);
+        plane.castShadow = true;
+        plane.receiveShadow = true;
+        worldItems.push(plane);
+        let turnSpeed = .1;
 
         function rotateAboutWorldAxis(object, axis, angle) {
             var rotationMatrix = new THREE.Matrix4();
@@ -157,6 +160,7 @@
         function checkPositions(sun, moon) {
             let moonLight = moon.bulbLight;
             let sunLight = sun.bulbLight;
+          
             let sunMaterial = sun.bulbMat;
             if (moonLight.position.y > 4) {
                 renderer.setClearColor(skyColors[0]);
@@ -176,8 +180,11 @@
                 cube.material.color.setHex(skyColors[2]);
                 moonLight.intensity = .5;
             }
-            else if (moonLight.position.y < 1) {
+            else if (moonLight.position.y < 1 && moonLight.position.y > -.5) {
                 moonLight.intensity = .4;
+            }
+            else if (moonLight.position.y < -.5) {
+                moonLight.intensity = 0;
             }
 
             if (sunLight.position.y > 4) {
@@ -202,10 +209,15 @@
                 sunLight.color.setHex(sunColors[3]);
                 sunMaterial.emissive.set(sunColors[3]);
             }
-            else if (sunLight.position.y < 1) {
+            else if (sunLight.position.y < 1&& sunLight.position.y > -.5) {
                 sunLight.color.setHex(sunColors[4]);
                 sunMaterial.emissive.set(sunColors[4]);
+                sunLight.intensity = 1;
+            } 
+            else if (sunLight.position.y < -.5) {
+                sunLight.intensity = 0;
             }
+
 
         }
 
@@ -223,6 +235,20 @@
             return distance; //Returns distance
         }
 
+        function trees() {
+            let testgeometry = new THREE.SphereGeometry(2, 32,32 );
+            let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            let mesh = new THREE.Mesh(testgeometry, testMaterial);
+            mesh.position.set(0, 2, 0);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+
+        }
+
+        trees();
+
+
 
         function animate() {
 
@@ -232,7 +258,16 @@
 
             if (controls.isLocked === true) {
 
+                // raycaster.ray.origin.copy(controls.getObject().position);
+                //raycaster.ray.origin.y -= 10;
+
+                // const intersections = raycaster.intersectObjects(objects, false);
+
+                // const onObject = intersections.length > 0;
+
                 const delta = (time - prevTime) / 1000;
+
+
 
                 velocity.x -= velocity.x * 10.0 * delta;
                 velocity.z -= velocity.z * 10.0 * delta;
@@ -246,6 +281,12 @@
                 if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
                 if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
 
+                // if (onObject === true) {
+
+                //     velocity.y = Math.max(0, velocity.y);
+                //     canJump = true;
+
+                // }
 
                 controls.moveRight(- velocity.x * delta);
                 controls.moveForward(- velocity.z * delta);
@@ -269,45 +310,6 @@
 
         }
 
-
-
-        function render() {
-
-            raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
-            //console.log('distance', calcDistance(camera.position, sphere));
-            let distance = calcDistance(camera.position, sphere);
-
-            sphere.scale.set(distance * .5, distance * .5, distance * .5);
-
-
-            const intersections = raycaster.intersectObjects(worldItems, false);
-            intersection = (intersections.length) > 0 ? intersections[0] : null;
-
-            if (toggle > 0.001 && intersection !== null) {
-
-                spheres[0].position.copy(intersection.point);
-                toggle = 0;
-
-            }
-
-
-            toggle += clock.getDelta();
-
-            updateSize();
-            requestAnimationFrame(render);
-
-            const time = performance.now();
-            const delta = time - previousTime;
-
-            // We need to translate the object back to the origin before rotating it:
-            rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .05);
-            rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .05);
-            checkPositions(sun, moon);
-
-
-            previousTime = time;
-            renderer.render(scene, camera);
-        }
 
 
 
@@ -374,6 +376,157 @@
 
         document.addEventListener('keydown', onKeyDown);
         document.addEventListener('keyup', onKeyUp);
+
+
+        function render() {
+
+
+
+
+            // camera.applyMatrix4(rotateY);
+            //  camera.updateMatrixWorld();
+
+            // raycaster.setFromCamera(pointer, camera);
+
+
+            raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
+            //console.log('distance', calcDistance(camera.position, sphere));
+            let distance = calcDistance(camera.position, sphere);
+
+            sphere.scale.set(distance * .5, distance * .5, distance * .5);
+
+
+
+
+
+            const intersections = raycaster.intersectObjects(worldItems, false);
+            intersection = (intersections.length) > 0 ? intersections[0] : null;
+
+            if (toggle > 0.001 && intersection !== null) {
+
+                spheres[spheresIndex].position.copy(intersection.point);
+                toggle = 0;
+
+            }
+
+
+            toggle += clock.getDelta();
+
+
+
+            updateSize();
+            requestAnimationFrame(render);
+
+            const time = performance.now();
+
+            const delta = time - previousTime;
+
+
+
+            // We need to translate the object back to the origin before rotating it:
+            rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .05);
+            rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .05);
+            checkPositions(sun, moon);
+
+
+
+            // Rotate while we rotate:
+            //moon.rotateX(turnSpeed * 0.1);
+
+            // // If we're rotating the camera change that here.
+            // if (animateRotation)
+            //     // The applyAxisAngle method rotates about an axis in space
+            //     camera.position.applyAxisAngle(new THREE.Vector3(0.0, 1.0, 0.0), turnSpeed * 0.1);
+            // if (animateOtherRotation)
+            //     camera.position.applyAxisAngle(new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * 0.1);
+
+            // camera.lookAt(new THREE.Vector3(xLookAt, yLookAt, zLookAt));
+
+            // requestAnimationFrame(animate);
+            // renderer.render(scene, camera);
+
+            previousTime = time;
+            renderer.render(scene, camera);
+        }
+
+
+        //source: https://threejs.org/examples/webgl_multiple_views.html
+        //This function updates the window width and height variables to the actual width and height of the computer
+        //regardless of whether the console has been opened or not
+        function updateSize() {
+            if (windowWidth != window.innerWidth || windowHeight != window.innerHeight) { //If the window width or height has
+                //actually been changed than this if statement is triggered
+                windowWidth = window.innerWidth;
+                windowHeight = window.innerHeight;
+                renderer.setSize(windowWidth, windowHeight);
+            }
+        }
+
+
+
+        // function keyHandler(e) {
+        //     switch (e.keyCode) {
+        //         case 65: //L
+        //             break;
+        //         case 68:
+
+        //             break;
+        //         case 80:
+
+        //             break;
+        //         case 83:
+
+
+
+
+        //     }
+        // }
+
+
+
+
+
+
+        // document.addEventListener("keydown", keyHandler, false);
+
+
+
+
+        // raycaster.setFromCamera(pointer, camera);
+
+        // const intersects = raycaster.intersectObjects(scene.children, false);
+
+        // console.log(intersects);
+
+        // if (intersects.length > 0) {
+
+        //     if (INTERSECTED != intersects[0].object) {
+
+        //         if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+
+        //         INTERSECTED = intersects[0].object;
+        //         INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+        //         INTERSECTED.material.emissive.setHex(0xff0000);
+
+        //     }
+
+        // } else {
+
+        //     if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+
+        //     INTERSECTED = null;
+
+        // }
+
+
+
+
+
+
+
+
+
+
 
 
 
