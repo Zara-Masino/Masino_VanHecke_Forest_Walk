@@ -39,6 +39,8 @@
         const vertex = new THREE.Vector3();
         const color = new THREE.Color();
 
+        let directionn = new THREE.Vector3();
+        let backDirection = new THREE.Vector3();
 
         let sunColors = [0xf7e2ba, 0xffdaa8, 0xf8cb7c, 0xfdb25b, 0xfa9e4d];
         let moonColor = [0xdde2e5];
@@ -62,7 +64,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.BasicShadowMap;
-      
+
 
 
         var controls = new PointerLockControls(camera, document.body);
@@ -139,8 +141,8 @@
         const material = new THREE.MeshPhongMaterial({ color: 0x90EE90, side: THREE.DoubleSide });
         const plane = new THREE.Mesh(geometry, material);
         plane.position.set(0.0, -0.5, 0.0);
-        
-        plane.rotation.x -= Math.PI/2;
+
+        plane.rotation.x -= Math.PI / 2;
         scene.add(plane);
         plane.castShadow = true;
         plane.receiveShadow = true;
@@ -161,7 +163,7 @@
         function checkPositions(sun, moon) {
             let moonLight = moon.bulbLight;
             let sunLight = sun.bulbLight;
-          
+
             let sunMaterial = sun.bulbMat;
             if (moonLight.position.y > 4) {
                 renderer.setClearColor(skyColors[0]);
@@ -210,11 +212,11 @@
                 sunLight.color.setHex(sunColors[3]);
                 sunMaterial.emissive.set(sunColors[3]);
             }
-            else if (sunLight.position.y < 1&& sunLight.position.y > -.5) {
+            else if (sunLight.position.y < 1 && sunLight.position.y > -.5) {
                 sunLight.color.setHex(sunColors[4]);
                 sunMaterial.emissive.set(sunColors[4]);
                 sunLight.intensity = 1;
-            } 
+            }
             else if (sunLight.position.y < -.5) {
                 sunLight.intensity = 0;
             }
@@ -235,9 +237,30 @@
             )
             return distance; //Returns distance
         }
+        //point 2 is lookat
+        //point is camera
+        function calcBehind(point, point2) {
+            //This calculates the distance of two points based on the distance formula
+            // console.log(point, 'POINT1 CHECK');
+            // console.log(point2, 'POINT2 CHECK');
+            const distance = Math.sqrt(
+                (point.x - point2.x) * (point.x - point2.x) +
+                (point.y - point2.y) * (point.y - point2.y) +
+                (point.z - point2.z) * (point.z - point2.z)
+            )
 
-        function makeTrees(x,y) {
-            let testgeometry = new THREE.SphereGeometry(.5, 32,32 );
+            console.log(distance, 'DISTANCE CHECK');
+          
+
+            point2.x = distance *.05;
+            point2.y = distance *.05;
+            point2.z = distance *.05;
+        
+            return point2; //Returns distance
+        }
+
+        function makeTrees(x, y) {
+            let testgeometry = new THREE.SphereGeometry(.5, 32, 32);
             testgeometry.computeBoundingSphere(); //Compute a bounding sphere around each object
             let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
             let mesh = new THREE.Mesh(testgeometry, testMaterial);
@@ -245,21 +268,21 @@
             worldItems.push(mesh);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
-            
+
             scene.add(mesh);
             return mesh;
 
         }
         let x = .1;
         let y = .1;
-        for (let i = 0; i < 3; i++){
-            let tree1 = new makeTrees(x,y);
-            x +=1;
-            y +=1;
-            trees.push(tree1);
-        }
+        // for (let i = 0; i < 3; i++) {
+        //     let tree1 = new makeTrees(x, y);
+        //     x += 1;
+        //     y += 1;
+        //     trees.push(tree1);
+        // }
 
-        console.log(trees);
+        //,console.log(trees);
 
 
 
@@ -269,17 +292,105 @@
             let distance = calcDistance(point, shape); //Calculates the distance between the camera's position
             //and an object
             if (distance < shape.geometry.boundingSphere.radius) { //If the distance or camera is within the objects
-               console.log("HELLER");
-               return true;
+                console.log("HELLER");
+                return true;
             }
-            else{
+            else {
                 return false;
             }
         }
 
+        let group = new THREE.Group();
+
+        function makeBody() {
+            const headGeometry = new THREE.SphereGeometry(.5, 32, 32);
+            const headMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.castShadow = true;
+            head.receiveShadow = true;
+            group.add(head);
+            head.position.set(1, 1.65, 1);
+
+            let bodyGeometry = new THREE.BoxGeometry(0.35, 1, 0.35)
+            const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            let body = new THREE.Mesh(bodyGeometry, bodyMaterial)
+            body.castShadow = true;
+            body.receiveShadow = true;
+            body.position.set(1, 1, 1);
+            group.add(body)
+
+
+            let leftArmGeometry = new THREE.BoxGeometry(0.15, .75, 0.15)
+            const leftArmMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            let leftArm = new THREE.Mesh(leftArmGeometry, leftArmMaterial)
+            leftArm.castShadow = true;
+            leftArm.receiveShadow = true;
+            leftArm.rotateZ(-Math.PI / 3);
+            leftArm.position.set(.60, .9, 1);
+            group.add(leftArm);
+
+            let rightArmGeometry = new THREE.BoxGeometry(0.15, .75, 0.15)
+            const rightArmMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            let rightArm = new THREE.Mesh(rightArmGeometry, rightArmMaterial)
+            rightArm.castShadow = true;
+            rightArm.receiveShadow = true;
+            rightArm.rotateZ(Math.PI / 3);
+            rightArm.position.set(1.4, .9, 1);
+            group.add(rightArm);
+
+
+            let rightLegGeometry = new THREE.BoxGeometry(0.25, 1.25, 0.25)
+            const rightLegMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            let rightLeg = new THREE.Mesh(rightLegGeometry, rightLegMaterial)
+            rightLeg.castShadow = true;
+            rightLeg.receiveShadow = true;
+            rightLeg.rotateZ(Math.PI / 6);
+            rightLeg.position.set(1.4, 0, 1);
+            group.add(rightLeg);
+
+            let leftLegGeometry = new THREE.BoxGeometry(0.25, 1.25, 0.25)
+            const leftLegMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            let leftLeg = new THREE.Mesh(leftLegGeometry, leftLegMaterial)
+            leftLeg.castShadow = true;
+            leftLeg.receiveShadow = true;
+            leftLeg.rotateZ(-Math.PI / 6);
+            leftLeg.position.set(.60, 0, 1);
+            group.add(leftLeg);
+            console.log(group.children[0].lookAt, 'GROUP LOOK AT');
+        }
+
+       // console.log('group', group.children[0]);
+
+        makeBody();
+
+        group.add(camera);
+
+        scene.add(group);
+
+       // console.log('head', group);
+
+        function rearCamera(directionn) {
+            //Gets the look at for the rear view look at by doing the following:
+                //1. Multiplies the look at of the forward looking camera by -1
+                //2. Adds the look at to the camera's position
+                //3. This new value is the look at for the rear view camera
+            backDirection.x = (directionn.x * -1) + camera.position.x;
+            backDirection.y = (directionn.y * -1) + camera.position.y;
+            backDirection.z = (directionn.z * -1) + camera.position.z;
+           // console.log(backDirection, 'backdirection');
+        }
 
 
         function animate() {
+
+            camera.getWorldDirection(directionn)
+          
+            rearCamera(directionn);
+
+           
+
+            
+            
 
             requestAnimationFrame(animate);
 
@@ -287,13 +398,13 @@
 
             if (controls.isLocked === true) {
 
-                
-                for (let i = 0; i < trees.length; i++){
-                    if (collisionDetection(sphere.position, trees[i])==true){
-                        trees[i].material.emissive.setHex( 0xff0000 );
+
+                for (let i = 0; i < trees.length; i++) {
+                    if (collisionDetection(sphere.position, trees[i]) == true) {
+                        trees[i].material.emissive.setHex(0xff0000);
                     }
                     else {
-                        trees[i].material.emissive.setHex( 0x000000 );
+                        trees[i].material.emissive.setHex(0x000000);
                     }
                 }
 
@@ -305,8 +416,6 @@
                 // const onObject = intersections.length > 0;
 
                 const delta = (time - prevTime) / 1000;
-
-
 
                 velocity.x -= velocity.x * 10.0 * delta;
                 velocity.z -= velocity.z * 10.0 * delta;
@@ -320,23 +429,54 @@
                 if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
                 if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
 
-                // if (onObject === true) {
-
-                //     velocity.y = Math.max(0, velocity.y);
-                //     canJump = true;
-
-                // }
 
                 controls.moveRight(- velocity.x * delta);
                 controls.moveForward(- velocity.z * delta);
 
-                controls.getObject().position.y += (velocity.y * delta); // new behavior
+                // console.log(backDirection, 'BACK DIRECTION ');
+                // console.log(camera.position, 'CAMERA.POSITION');
 
-                if (controls.getObject().position.y < 0) {
+                //let newPos = calcBehind(camera.position, backDirection);
+
+                // console.log(newPos.x, 'NEW POS X');
+                // console.log(newPos.y, 'NEW POS Y');
+                // console.log(newPos.z, 'NEW POS Z');
+
+               
+
+                group.children[0].position.x=(backDirection.x);
+                group.children[1].position.x=(backDirection.x);
+                group.children[2].position.x=(backDirection.x-.4);
+                group.children[3].position.x=(backDirection.x+.4);
+                group.children[4].position.x=(backDirection.x+.4);
+                group.children[5].position.x=(backDirection.x-.4);
+
+                group.children[0].position.z=(backDirection.z);
+                group.children[1].position.z=(backDirection.z);
+                group.children[2].position.z=(backDirection.z);
+                group.children[3].position.z=(backDirection.z);
+                group.children[4].position.z=(backDirection.z);
+                group.children[5].position.z=(backDirection.z);
+
+
+                // group.children[0].lookAt(backDirection);
+                // group.children[1].lookAt(backDirection);
+                // group.children[2].lookAt(backDirection);
+                // group.children[3].lookAt(backDirection);
+                // group.children[4].lookAt(backDirection);
+                // group.children[5].lookAt(backDirection);
+
+              
+
+               
+                controls.getObject().position.y += (velocity.y * delta); // new behavior
+               //group.children[0].position.y += (velocity.y * delta); // new behavior
+
+                if (controls.getObject().position.y < group.children[0].position.y) {
 
                     velocity.y = 0;
-                    controls.getObject().position.y = 0;
-
+                    controls.getObject().position.y = group.children[0].position.y;
+                  
                     canJump = true;
 
                 }
