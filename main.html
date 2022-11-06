@@ -18,7 +18,12 @@
 
         const pointer = new THREE.Vector2();
         let INTERSECTED;
-
+        const spheres = [];
+        const spheresIndex = 0;
+        
+        let intersection = null;
+        let toggle = 0;
+        let clock = new THREE.Clock();
 
         let moveForward = false;
         let moveBackward = false;
@@ -72,6 +77,19 @@
             pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
         }
+
+
+        
+        const sphereGeometry = new THREE.SphereGeometry(0.01, 16, 16);
+            const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+
+            for (let i = 0; i < 40; i++) {
+
+                const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+                scene.add(sphere);
+                spheres.push(sphere);
+
+            }
 
 
 
@@ -297,6 +315,30 @@
 
 
         function render() {
+
+
+
+
+           // camera.applyMatrix4(rotateY);
+          //  camera.updateMatrixWorld();
+
+            raycaster.setFromCamera(pointer, camera);
+
+            const intersections = raycaster.intersectObject(plane, false);
+            intersection = (intersections.length) > 0 ? intersections[0] : null;
+
+            if (toggle > 0.001 && intersection !== null) {
+
+                spheres[spheresIndex].position.copy(intersection.point);
+                toggle = 0;
+
+            }
+
+
+            toggle += clock.getDelta();
+
+
+
             updateSize();
             requestAnimationFrame(render);
 

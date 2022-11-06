@@ -265,23 +265,13 @@
             const intersections = raycaster.intersectObjects(pointclouds, false);
             intersection = (intersections.length) > 0 ? intersections[0] : null;
 
-            if (toggle > 0.02 && intersection !== null) {
+            if (toggle > 0.001 && intersection !== null) {
 
                 spheres[spheresIndex].position.copy(intersection.point);
-                spheres[spheresIndex].scale.set(1, 1, 1);
-                spheresIndex = (spheresIndex + 1) % spheres.length;
-
                 toggle = 0;
 
             }
 
-            // for (let i = 0; i < spheres.length; i++) {
-
-            //     const sphere = spheres[i];
-            //     sphere.scale.multiplyScalar(0.98);
-            //     sphere.scale.clampScalar(0.01, 1);
-
-            // }
 
             toggle += clock.getDelta();
 
