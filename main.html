@@ -20,7 +20,8 @@
         let INTERSECTED;
         const spheres = [];
         const spheresIndex = 0;
-        
+        let worldItems = [];
+
         let intersection = null;
         let toggle = 0;
         let clock = new THREE.Clock();
@@ -79,17 +80,25 @@
         }
 
 
-        
-        const sphereGeometry = new THREE.SphereGeometry(0.01, 16, 16);
-            const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 
-            for (let i = 0; i < 40; i++) {
+        const sphereGeometry = new THREE.SphereGeometry(0.02, 16, 16);
+        const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 
-                const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-                scene.add(sphere);
-                spheres.push(sphere);
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+        spheres.push(sphere);
 
-            }
+
+
+        var world = new THREE.BoxGeometry(20, 20, 20);
+        var wmat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false });
+
+        /* Cause the material to be visible for inside and outside */
+        wmat.side = THREE.BackSide;
+
+        var cube = new THREE.Mesh(world, wmat);
+        scene.add(cube);
+        worldItems.push(cube);
 
 
 
@@ -115,6 +124,9 @@
         //makeLights(skyColors[4], 4);
         let moon = new makeLights(moonColor[0], -4, -5, 0, .1);
         let sun = new makeLights(sunColors[4], 4, 5, 0, 1);
+        worldItems.push(sun.bulbLight);
+        worldItems.push(moon.bulbLight);
+       
 
 
 
@@ -125,6 +137,7 @@
         plane.position.set(0.0, -0.5, 0.0);
         plane.rotation.x = Math.PI / 2;
         scene.add(plane);
+        worldItems.push(plane);
         let turnSpeed = .1;
 
         function rotateAboutWorldAxis(object, axis, angle) {
@@ -144,10 +157,12 @@
             let sunMaterial = sun.bulbMat;
             if (moonLight.position.y > 4) {
                 renderer.setClearColor(skyColors[0]);
+                cube.material.color.setHex(skyColors[0]);
                 moonLight.intensity = .8;
             }
             else if (3 <= moonLight.position.y && moonLight.position.y < 4) {
                 renderer.setClearColor(skyColors[1]);
+                cube.material.color.setHex(skyColors[1]);
                 moonLight.intensity = .7;
             }
             else if (2 <= moonLight.position.y && moonLight.position.y < 3) {
@@ -155,6 +170,7 @@
             }
             else if (1 <= moonLight.position.y && moonLight.position.y < 2) {
                 renderer.setClearColor(skyColors[2]);
+                cube.material.color.setHex(skyColors[2]);
                 moonLight.intensity = .5;
             }
             else if (moonLight.position.y < 1) {
@@ -163,11 +179,13 @@
 
             if (sunLight.position.y > 4) {
                 renderer.setClearColor(skyColors[5]);
+                cube.material.color.setHex(skyColors[5]);
                 sunLight.color.setHex(sunColors[0]);
                 sunMaterial.emissive.set(sunColors[0]);
             }
             else if (3 <= sunLight.position.y && sunLight.position.y < 4) {
                 renderer.setClearColor(skyColors[4]);
+                cube.material.color.setHex(skyColors[4]);
                 sunLight.color.setHex(sunColors[1]);
                 sunMaterial.emissive.set(sunColors[1]);
             }
@@ -177,6 +195,7 @@
             }
             else if (1 <= sunLight.position.y && sunLight.position.y < 2) {
                 renderer.setClearColor(skyColors[3]);
+                cube.material.color.setHex(skyColors[3]);
                 sunLight.color.setHex(sunColors[3]);
                 sunMaterial.emissive.set(sunColors[3]);
             }
@@ -185,6 +204,27 @@
                 sunMaterial.emissive.set(sunColors[4]);
             }
 
+        }
+
+         //https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
+        //The above link helped us with determining the equation we would use to calculate the distance between two
+        //points
+        //Calculates the distance between two points
+        function calcDistance(point, shape) {
+            //This calculates the distance of two points based on the distance formula
+            const distance = Math.sqrt(
+                (point.x - shape.object.position.x) * (point.x - shape.object.position.x) +
+                (point.y - shape.object.position.y) * (point.y - shape.object.position.y) +
+                (point.z - shape.object.position.z) * (point.z - shape.object.position.z)
+            )
+            return distance; //Returns distance
+        }
+
+        function calulateSize(point, shape) {
+            let distance = calcDistance(point, shape); //Calculates distance between camera position and an object
+            if (distance > 300) {//If they are too far away from one another then the object relocates the shape to be within bounds
+                relocateShape(shape); //Relocates shape
+            };
         }
 
 
@@ -196,12 +236,12 @@
 
             if (controls.isLocked === true) {
 
-               // raycaster.ray.origin.copy(controls.getObject().position);
+                // raycaster.ray.origin.copy(controls.getObject().position);
                 //raycaster.ray.origin.y -= 10;
 
-               // const intersections = raycaster.intersectObjects(objects, false);
+                // const intersections = raycaster.intersectObjects(objects, false);
 
-               // const onObject = intersections.length > 0;
+                // const onObject = intersections.length > 0;
 
                 const delta = (time - prevTime) / 1000;
 
@@ -319,12 +359,15 @@
 
 
 
-           // camera.applyMatrix4(rotateY);
-          //  camera.updateMatrixWorld();
+            // camera.applyMatrix4(rotateY);
+            //  camera.updateMatrixWorld();
 
-            raycaster.setFromCamera(pointer, camera);
+           // raycaster.setFromCamera(pointer, camera);
 
-            const intersections = raycaster.intersectObject(plane, false);
+
+           raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
+
+            const intersections = raycaster.intersectObjects(worldItems, false);
             intersection = (intersections.length) > 0 ? intersections[0] : null;
 
             if (toggle > 0.001 && intersection !== null) {
