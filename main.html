@@ -15,6 +15,7 @@
 
         var scene = new THREE.Scene();
         let raycaster = new THREE.Raycaster();
+        let trees = [];
 
         const pointer = new THREE.Vector2();
         let INTERSECTED;
@@ -235,18 +236,46 @@
             return distance; //Returns distance
         }
 
-        function trees() {
-            let testgeometry = new THREE.SphereGeometry(2, 32,32 );
+        function makeTrees(x,y) {
+            let testgeometry = new THREE.SphereGeometry(.5, 32,32 );
+            testgeometry.computeBoundingSphere(); //Compute a bounding sphere around each object
             let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
             let mesh = new THREE.Mesh(testgeometry, testMaterial);
-            mesh.position.set(0, 2, 0);
+            mesh.position.set(x, y, 0);
+            worldItems.push(mesh);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
+            
             scene.add(mesh);
+            return mesh;
 
         }
+        let x = .1;
+        let y = .1;
+        for (let i = 0; i < 3; i++){
+            let tree1 = new makeTrees(x,y);
+            x +=1;
+            y +=1;
+            trees.push(tree1);
+        }
 
-        trees();
+        console.log(trees);
+
+
+
+        //Function which detects whether the camera has collided with an object and then provides
+        //some functionality to show that the collision was dealt with
+        function collisionDetection(point, shape) {
+            let distance = calcDistance(point, shape); //Calculates the distance between the camera's position
+            //and an object
+            if (distance < shape.geometry.boundingSphere.radius) { //If the distance or camera is within the objects
+               console.log("HELLER");
+               return true;
+            }
+            else{
+                return false;
+            }
+        }
 
 
 
@@ -257,6 +286,16 @@
             const time = performance.now();
 
             if (controls.isLocked === true) {
+
+                
+                for (let i = 0; i < trees.length; i++){
+                    if (collisionDetection(sphere.position, trees[i])==true){
+                        trees[i].material.emissive.setHex( 0xff0000 );
+                    }
+                    else {
+                        trees[i].material.emissive.setHex( 0x000000 );
+                    }
+                }
 
                 // raycaster.ray.origin.copy(controls.getObject().position);
                 //raycaster.ray.origin.y -= 10;
