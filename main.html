@@ -14,6 +14,24 @@
 
 
         var scene = new THREE.Scene();
+        let raycaster = new THREE.Raycaster();
+
+        const pointer = new THREE.Vector2();
+        let INTERSECTED;
+
+
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+        let canJump = false;
+
+        let prevTime = performance.now();
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        const vertex = new THREE.Vector3();
+        const color = new THREE.Color();
+
 
         let sunColors = [0xf7e2ba, 0xffdaa8, 0xf8cb7c, 0xfdb25b, 0xfa9e4d];
         let moonColor = [0xdde2e5];
@@ -43,7 +61,18 @@
             controls.lock();
         });
 
-        //Src : https://threejs.org/examples/?q=light#webgl_lights_physical
+
+
+        document.addEventListener('mousemove', onPointerMove);
+
+
+        function onPointerMove(event) {
+
+            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+            pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+        }
+
 
 
         function makeLights(hexCode, x, y, z, intensity) {
@@ -91,49 +120,49 @@
         }
 
 
-        function checkPositions(sun, moon){
-            let moonLight = moon.bulbLight; 
+        function checkPositions(sun, moon) {
+            let moonLight = moon.bulbLight;
             let sunLight = sun.bulbLight;
             let sunMaterial = sun.bulbMat;
-            if(moonLight.position.y > 4){
+            if (moonLight.position.y > 4) {
                 renderer.setClearColor(skyColors[0]);
                 moonLight.intensity = .8;
             }
-            else if(3 <= moonLight.position.y && moonLight.position.y < 4){
+            else if (3 <= moonLight.position.y && moonLight.position.y < 4) {
                 renderer.setClearColor(skyColors[1]);
                 moonLight.intensity = .7;
             }
-            else if(2 <= moonLight.position.y && moonLight.position.y < 3){
+            else if (2 <= moonLight.position.y && moonLight.position.y < 3) {
                 moonLight.intensity = .6;
             }
-            else if(1 <= moonLight.position.y && moonLight.position.y < 2){
+            else if (1 <= moonLight.position.y && moonLight.position.y < 2) {
                 renderer.setClearColor(skyColors[2]);
                 moonLight.intensity = .5;
             }
-            else if(moonLight.position.y < 1){
+            else if (moonLight.position.y < 1) {
                 moonLight.intensity = .4;
             }
 
-            if(sunLight.position.y > 4){
+            if (sunLight.position.y > 4) {
                 renderer.setClearColor(skyColors[5]);
                 sunLight.color.setHex(sunColors[0]);
                 sunMaterial.emissive.set(sunColors[0]);
             }
-            else if(3 <= sunLight.position.y && sunLight.position.y < 4){
+            else if (3 <= sunLight.position.y && sunLight.position.y < 4) {
                 renderer.setClearColor(skyColors[4]);
                 sunLight.color.setHex(sunColors[1]);
                 sunMaterial.emissive.set(sunColors[1]);
             }
-            else if(2 <= sunLight.position.y && sunLight.position.y < 3){
+            else if (2 <= sunLight.position.y && sunLight.position.y < 3) {
                 sunLight.color.setHex(sunColors[2]);
                 sunMaterial.emissive.set(sunColors[2]);
             }
-            else if(1 <= sunLight.position.y && sunLight.position.y < 2){
+            else if (1 <= sunLight.position.y && sunLight.position.y < 2) {
                 renderer.setClearColor(skyColors[3]);
                 sunLight.color.setHex(sunColors[3]);
                 sunMaterial.emissive.set(sunColors[3]);
             }
-            else if(sunLight.position.y < 1){
+            else if (sunLight.position.y < 1) {
                 sunLight.color.setHex(sunColors[4]);
                 sunMaterial.emissive.set(sunColors[4]);
             }
@@ -141,6 +170,130 @@
         }
 
 
+        function animate() {
+
+            requestAnimationFrame(animate);
+
+            const time = performance.now();
+
+            if (controls.isLocked === true) {
+
+               // raycaster.ray.origin.copy(controls.getObject().position);
+                //raycaster.ray.origin.y -= 10;
+
+               // const intersections = raycaster.intersectObjects(objects, false);
+
+               // const onObject = intersections.length > 0;
+
+                const delta = (time - prevTime) / 1000;
+
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+
+                velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+
+                direction.z = Number(moveForward) - Number(moveBackward);
+                direction.x = Number(moveRight) - Number(moveLeft);
+                direction.normalize(); // this ensures consistent movements in all directions
+
+                if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
+                if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
+
+                // if (onObject === true) {
+
+                //     velocity.y = Math.max(0, velocity.y);
+                //     canJump = true;
+
+                // }
+
+                controls.moveRight(- velocity.x * delta);
+                controls.moveForward(- velocity.z * delta);
+
+                controls.getObject().position.y += (velocity.y * delta); // new behavior
+
+                if (controls.getObject().position.y < 0) {
+
+                    velocity.y = 0;
+                    controls.getObject().position.y = 0;
+
+                    canJump = true;
+
+                }
+
+            }
+
+            prevTime = time;
+
+            renderer.render(scene, camera);
+
+        }
+
+
+
+
+        const onKeyDown = function (event) {
+
+            switch (event.code) {
+
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveForward = true;
+                    break;
+
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveLeft = true;
+                    break;
+
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveBackward = true;
+                    break;
+
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveRight = true;
+                    break;
+
+                case 'Space':
+                    if (canJump === true) velocity.y += 350;
+                    canJump = false;
+                    break;
+
+            }
+
+        };
+
+        const onKeyUp = function (event) {
+
+            switch (event.code) {
+
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveForward = false;
+                    break;
+
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveLeft = false;
+                    break;
+
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveBackward = false;
+                    break;
+
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveRight = false;
+                    break;
+
+            }
+
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+        document.addEventListener('keyup', onKeyUp);
 
 
         function render() {
@@ -151,14 +304,14 @@
 
             const delta = time - previousTime;
 
-            
+
 
             // We need to translate the object back to the origin before rotating it:
-            rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0),  turnSpeed*.05);
-            rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0),  turnSpeed*.05);
+            rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .05);
+            rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .05);
             checkPositions(sun, moon);
 
-            
+
 
             // Rotate while we rotate:
             //moon.rotateX(turnSpeed * 0.1);
@@ -180,7 +333,7 @@
         }
 
 
-         //source: https://threejs.org/examples/webgl_multiple_views.html
+        //source: https://threejs.org/examples/webgl_multiple_views.html
         //This function updates the window width and height variables to the actual width and height of the computer
         //regardless of whether the console has been opened or not
         function updateSize() {
@@ -194,27 +347,74 @@
 
 
 
-        function keyHandler(e) {
-            switch (e.keyCode) {
-                case 65: //L
-                    break;
-                case 68:
+        // function keyHandler(e) {
+        //     switch (e.keyCode) {
+        //         case 65: //L
+        //             break;
+        //         case 68:
 
-                    break;
-                case 80:
+        //             break;
+        //         case 80:
 
-                    break;
-                case 83:
-
-
+        //             break;
+        //         case 83:
 
 
-            }
-        }
-
-        document.addEventListener("keydown", keyHandler, false);
 
 
+        //     }
+        // }
+
+
+
+
+
+
+        // document.addEventListener("keydown", keyHandler, false);
+
+
+
+
+        // raycaster.setFromCamera(pointer, camera);
+
+        // const intersects = raycaster.intersectObjects(scene.children, false);
+
+        // console.log(intersects);
+
+        // if (intersects.length > 0) {
+
+        //     if (INTERSECTED != intersects[0].object) {
+
+        //         if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+
+        //         INTERSECTED = intersects[0].object;
+        //         INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+        //         INTERSECTED.material.emissive.setHex(0xff0000);
+
+        //     }
+
+        // } else {
+
+        //     if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+
+        //     INTERSECTED = null;
+
+        // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        animate();
         render();
     </script>
 </body>
