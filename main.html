@@ -49,8 +49,10 @@
         let windowWidth = window.innerWidth;
         let windowHeight = window.innerHeight;
 
+        const loader = new THREE.TextureLoader();
 
-        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
+
+        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
         camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0));
         camera.position.set(0, 80, 10);
         scene.add(camera);
@@ -63,7 +65,10 @@
         // If you want the render to span the window, uncomment this
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.BasicShadowMap;
+        //        renderer.shadowMap.type = THREE.BasicShadowMap;
+
+        renderer.shadowMapSoft = true;
+        renderer.shadowMapType = THREE.PCFSoftShadowMap;
 
 
 
@@ -96,7 +101,7 @@
 
 
 
-        var world = new THREE.BoxGeometry(700, 700, 700);
+        var world = new THREE.BoxGeometry(900, 900, 900);
         var wmat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false });
 
         /* Cause the material to be visible for inside and outside */
@@ -123,6 +128,14 @@
             this.bulbLight.position.set(x, y, z); //Positions the bulblight 
             this.bulbLight.castShadow = true; //Casts shadow from the bulb light
             this.bulbLight.shadow.bias = - 0.0005; // reduces self-shadowing on double-sided objects
+            //  this.bulbLight.shadow.bias = - 0.0005; // reduces self-shadowing on double-sided objects
+            this.bulbLight.shadow.radius = 8;
+            this.bulbLight.shadow.mapSize.width = 2048; // You have there 4K no need to go over 2K
+
+            this.bulbLight.shadow.mapSize.height = 2048; // 
+
+
+
             // this.bulbLight.shadow.mapSize.width = 2048;
             // this.bulbLight.shadow.mapSize.height = 2048;
             scene.add(this.bulbLight); //Adds bulb light to the scene
@@ -138,7 +151,7 @@
 
 
 
-        
+
 
 
         class Perlin {
@@ -235,14 +248,18 @@
 
 
 
-
-
-
-
+        var geometry1 = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
+        var material1 = new THREE.MeshPhysicalMaterial({ map: loader.load('land/water3.jpg') });
+        var water = new THREE.Mesh(geometry1, material1);
+        water.rotation.x = -Math.PI / 2;
+        water.position.y =-25;
+        //water.receiveShadow = true;
+        scene.add(water);
+        console.log(water);
 
 
         var geometry = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
-        var material = new THREE.MeshPhysicalMaterial({ color: 0x3c3fff });
+        var material = new THREE.MeshPhysicalMaterial({ map: loader.load('land/sand3.jpg') });
         var plane = new THREE.Mesh(geometry, material);
         plane.rotation.x = -Math.PI / 2;
         scene.add(plane);
@@ -255,6 +272,29 @@
         }
         plane.geometry.attributes.position.needsUpdate = true;
         plane.geometry.computeVertexNormals();
+
+
+
+        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
+        let planeMaterial = new THREE.ShadowMaterial();
+        planeMaterial.opacity = 0.5;
+        var shadowPlane = new THREE.Mesh(geometry, planeMaterial);
+        shadowPlane.receiveShadow = true;
+        shadowPlane.position.copy(plane.position);
+        shadowPlane.rotation.copy(plane.rotation);
+        scene.add(shadowPlane);
+
+
+        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
+        let waterMaterial = new THREE.ShadowMaterial();
+        waterMaterial.opacity = 0.5;
+        var waterShadow = new THREE.Mesh(geometry1, waterMaterial);
+        waterShadow.receiveShadow = true;
+        waterShadow.position.copy(water.position);
+        waterShadow.rotation.copy(water.rotation);
+        scene.add(waterShadow);
+
+        console.log(waterShadow, 'WATER');
 
 
 
@@ -288,7 +328,7 @@
         // plane.rotation.x -= Math.PI / 2;
         // scene.add(plane);
         plane.castShadow = true;
-        plane.receiveShadow = true;
+       // plane.receiveShadow = true;
         worldItems.push(plane);
         let turnSpeed = .1;
 
@@ -308,59 +348,66 @@
             let sunLight = sun.bulbLight;
 
             let sunMaterial = sun.bulbMat;
-            if (moonLight.position.y > 4) {
+            if (moonLight.position.y > 300) {
                 renderer.setClearColor(skyColors[0]);
                 cube.material.color.setHex(skyColors[0]);
                 moonLight.intensity = .8;
             }
-            else if (3 <= moonLight.position.y && moonLight.position.y < 4) {
+            else if (240 <= moonLight.position.y && moonLight.position.y < 300) {
                 renderer.setClearColor(skyColors[1]);
                 cube.material.color.setHex(skyColors[1]);
                 moonLight.intensity = .7;
             }
-            else if (2 <= moonLight.position.y && moonLight.position.y < 3) {
+            else if (180 <= moonLight.position.y && moonLight.position.y < 240) {
                 moonLight.intensity = .6;
             }
-            else if (1 <= moonLight.position.y && moonLight.position.y < 2) {
+            else if (120 <= moonLight.position.y && moonLight.position.y < 180) {
                 renderer.setClearColor(skyColors[2]);
                 cube.material.color.setHex(skyColors[2]);
                 moonLight.intensity = .5;
             }
-            else if (moonLight.position.y < 1 && moonLight.position.y > -.5) {
+            else if (moonLight.position.y < 120 && moonLight.position.y > -.5) {
                 moonLight.intensity = .4;
             }
             else if (moonLight.position.y < -.5) {
                 moonLight.intensity = 0;
             }
 
-            if (sunLight.position.y > 4) {
+            if (sunLight.position.y > 300) {
+                //  console.log(sunLight.position.y, 'sun position AT highest');
+
                 renderer.setClearColor(skyColors[5]);
                 cube.material.color.setHex(skyColors[5]);
                 sunLight.color.setHex(sunColors[0]);
                 sunMaterial.emissive.set(sunColors[0]);
             }
-            else if (3 <= sunLight.position.y && sunLight.position.y < 4) {
+            else if (240 <= sunLight.position.y && sunLight.position.y < 300) {
+                //  console.log(sunLight.position.y, 'sun position AT MID');
                 renderer.setClearColor(skyColors[4]);
                 cube.material.color.setHex(skyColors[4]);
                 sunLight.color.setHex(sunColors[1]);
                 sunMaterial.emissive.set(sunColors[1]);
             }
-            else if (2 <= sunLight.position.y && sunLight.position.y < 3) {
+            else if (180 <= sunLight.position.y && sunLight.position.y < 240) {
+                //  console.log(sunLight.position.y, 'sun position AT second MID');
                 sunLight.color.setHex(sunColors[2]);
                 sunMaterial.emissive.set(sunColors[2]);
             }
-            else if (1 <= sunLight.position.y && sunLight.position.y < 2) {
+            else if (120 <= sunLight.position.y && sunLight.position.y < 180) {
+                // console.log(sunLight.position.y, 'sun position AT second to last lowest');
                 renderer.setClearColor(skyColors[3]);
                 cube.material.color.setHex(skyColors[3]);
                 sunLight.color.setHex(sunColors[3]);
                 sunMaterial.emissive.set(sunColors[3]);
             }
-            else if (sunLight.position.y < 1 && sunLight.position.y > -.5) {
+            else if (sunLight.position.y < 120 && sunLight.position.y > -.5) {
+                //console.log(sunLight.position.y, 'LAST');
                 sunLight.color.setHex(sunColors[4]);
                 sunMaterial.emissive.set(sunColors[4]);
                 sunLight.intensity = 1;
             }
             else if (sunLight.position.y < -.5) {
+                //console.log(sunLight.position.y, 'turn sun off');
                 sunLight.intensity = 0;
             }
 
@@ -393,12 +440,12 @@
             )
 
             console.log(distance, 'DISTANCE CHECK');
-          
 
-            point2.x = distance *.05;
-            point2.y = distance *.05;
-            point2.z = distance *.05;
-        
+
+            point2.x = distance * .05;
+            point2.y = distance * .05;
+            point2.z = distance * .05;
+
             return point2; //Returns distance
         }
 
@@ -446,7 +493,7 @@
         let group = new THREE.Group();
 
         function makeBody() {
-            const headGeometry = new THREE.SphereGeometry(.5, 32, 32);
+            const headGeometry = new THREE.SphereGeometry(10, 32, 32);
             const headMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
             const head = new THREE.Mesh(headGeometry, headMaterial);
             head.castShadow = true;
@@ -502,7 +549,7 @@
             console.log(group.children[0].lookAt, 'GROUP LOOK AT');
         }
 
-       // console.log('group', group.children[0]);
+        // console.log('group', group.children[0]);
 
         makeBody();
 
@@ -510,30 +557,30 @@
 
         scene.add(group);
 
-       // console.log('head', group);
+        // console.log('head', group);
 
         function rearCamera(directionn) {
             //Gets the look at for the rear view look at by doing the following:
-                //1. Multiplies the look at of the forward looking camera by -1
-                //2. Adds the look at to the camera's position
-                //3. This new value is the look at for the rear view camera
+            //1. Multiplies the look at of the forward looking camera by -1
+            //2. Adds the look at to the camera's position
+            //3. This new value is the look at for the rear view camera
             backDirection.x = (directionn.x * -1) + camera.position.x;
             backDirection.y = (directionn.y * -1) + camera.position.y;
             backDirection.z = (directionn.z * -1) + camera.position.z;
-           // console.log(backDirection, 'backdirection');
+            // console.log(backDirection, 'backdirection');
         }
 
 
         function animate() {
 
             camera.getWorldDirection(directionn)
-          
+
             rearCamera(directionn);
 
-           
 
-            
-            
+
+
+
 
             requestAnimationFrame(animate);
 
@@ -585,21 +632,21 @@
                 // console.log(newPos.y, 'NEW POS Y');
                 // console.log(newPos.z, 'NEW POS Z');
 
-               
 
-                group.children[0].position.x=(backDirection.x);
-                group.children[1].position.x=(backDirection.x);
-                group.children[2].position.x=(backDirection.x-.4);
-                group.children[3].position.x=(backDirection.x+.4);
-                group.children[4].position.x=(backDirection.x+.4);
-                group.children[5].position.x=(backDirection.x-.4);
 
-                group.children[0].position.z=(backDirection.z);
-                group.children[1].position.z=(backDirection.z);
-                group.children[2].position.z=(backDirection.z);
-                group.children[3].position.z=(backDirection.z);
-                group.children[4].position.z=(backDirection.z);
-                group.children[5].position.z=(backDirection.z);
+                group.children[0].position.x = (backDirection.x);
+                group.children[1].position.x = (backDirection.x);
+                group.children[2].position.x = (backDirection.x - .4);
+                group.children[3].position.x = (backDirection.x + .4);
+                group.children[4].position.x = (backDirection.x + .4);
+                group.children[5].position.x = (backDirection.x - .4);
+
+                group.children[0].position.z = (backDirection.z);
+                group.children[1].position.z = (backDirection.z);
+                group.children[2].position.z = (backDirection.z);
+                group.children[3].position.z = (backDirection.z);
+                group.children[4].position.z = (backDirection.z);
+                group.children[5].position.z = (backDirection.z);
 
 
                 // group.children[0].lookAt(backDirection);
@@ -609,17 +656,17 @@
                 // group.children[4].lookAt(backDirection);
                 // group.children[5].lookAt(backDirection);
 
-              
 
-               
+
+
                 controls.getObject().position.y += (velocity.y * delta); // new behavior
-               //group.children[0].position.y += (velocity.y * delta); // new behavior
+                //group.children[0].position.y += (velocity.y * delta); // new behavior
 
                 if (controls.getObject().position.y < 60) {
 
                     velocity.y = 0;
                     controls.getObject().position.y = 60;
-                  
+
                     canJump = true;
 
                 }
@@ -746,8 +793,8 @@
 
 
             // We need to translate the object back to the origin before rotating it:
-            rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .05);
-            rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .05);
+            rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
+            rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
             checkPositions(sun, moon);
 
 
