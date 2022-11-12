@@ -18,6 +18,7 @@
         let findFloor = new THREE.Raycaster();
 
         let trees = [];
+        let collision = [];
         let allowMove = true;
         const pointer = new THREE.Vector2();
         let INTERSECTED;
@@ -104,7 +105,7 @@
 
 
         var world = new THREE.BoxGeometry(900, 900, 900);
-        var wmat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false });
+        var wmat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false, side: THREE.DoubleSide });
 
         /* Cause the material to be visible for inside and outside */
         wmat.side = THREE.BackSide;
@@ -265,7 +266,7 @@
         var plane = new THREE.Mesh(geometry, material);
         plane.rotation.x = -Math.PI / 2;
         scene.add(plane);
-       // console.log(plane);
+        // console.log(plane);
 
         var peak = 60;
         var vertices = plane.geometry.attributes.position.array;
@@ -296,7 +297,7 @@
         waterShadow.rotation.copy(water.rotation);
         scene.add(waterShadow);
 
-       // console.log(waterShadow, 'WATER');
+        // console.log(waterShadow, 'WATER');
 
 
 
@@ -427,7 +428,7 @@
                 (point.z - point2.z) * (point.z - point2.z)
             )
 
-           // console.log(distance, 'DISTANCE CHECK');
+            // console.log(distance, 'DISTANCE CHECK');
 
 
             point2.x = distance * .05;
@@ -440,7 +441,7 @@
         function makeTrees(x, y) {
             let testgeometry = new THREE.SphereGeometry(25, 32, 32);
             testgeometry.computeBoundingSphere(); //Compute a bounding sphere around each object
-            let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff , side: THREE.DoubleSide});
+            let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
             let mesh = new THREE.Mesh(testgeometry, testMaterial);
             mesh.position.set(x, y, 0);
             worldItems.push(mesh);
@@ -466,6 +467,10 @@
 
         let test2 = new makeTrees(-50, 10);
         trees.push(test2);
+
+        collision.push(test);
+        collision.push(test2);
+        collision.push(cube);
 
 
 
@@ -580,14 +585,19 @@
             let intersect = ray.intersectObject(plane);
 
 
-           // console.log(intersect[0]);
-            if (intersect[0].distance > 20) {
-                camera.position.y -= 1;
+            // console.log(intersect[0]);
+          // console.log(intersect, 'intersect');
+            if (intersect.length != 0) {
+
+
+                if (intersect[0].distance > 20) {
+                    camera.position.y -= 1;
+                }
+                else if (intersect[0].distance < 10) {
+                    camera.position.y += 1;
+                }
             }
-            else if (intersect[0].distance < 10) {
-                camera.position.y += 1;
-            }
-           
+
 
             requestAnimationFrame(animate);
 
@@ -608,7 +618,7 @@
 
                 const delta = (time - prevTime) / 1000;
 
-          
+
                 // console.log(backDirection, 'BACK DIRECTION ');
                 // console.log(camera.position, 'CAMERA.POSITION');
 
@@ -723,6 +733,8 @@
 
         function render() {
 
+            console.log(camera.position, 'camera position');
+
 
 
             const intersections = raycaster.intersectObjects(worldItems, false);
@@ -805,6 +817,12 @@
 
             if (collisionRayCaster.intersectObjects(trees).length > 0) {
                 console.log("does it get in");
+                if (movement == "forward") camera.translateZ(speed);
+                if (movement == "left") camera.translateX(speed);
+                if (movement == "backward") camera.translateZ(-speed);
+                if (movement == "right") camera.translateX(-speed);
+            }
+            else if (camera.position.x < -380 || camera.position.x > 380 || camera.position.z < -380 || camera.position.z > 380) {
                 if (movement == "forward") camera.translateZ(speed);
                 if (movement == "left") camera.translateX(speed);
                 if (movement == "backward") camera.translateZ(-speed);
