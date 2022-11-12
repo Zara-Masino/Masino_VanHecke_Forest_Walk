@@ -315,20 +315,6 @@
         plane.geometry.computeVertexNormals();
 
 
-
-
-
-
-
-
-
-        // const geometry = new THREE.PlaneGeometry(10, 10);
-        // const material = new THREE.MeshPhongMaterial({ color: 0x90EE90, side: THREE.DoubleSide });
-        // const plane = new THREE.Mesh(geometry, material);
-        // plane.position.set(0.0, -0.5, 0.0);
-
-        // plane.rotation.x -= Math.PI / 2;
-        // scene.add(plane);
         plane.castShadow = true;
         // plane.receiveShadow = true;
         worldItems.push(plane);
@@ -565,7 +551,6 @@
 
         scene.add(group);
 
-        // console.log('head', group);
 
         function rearCamera(directionn) {
             //Gets the look at for the rear view look at by doing the following:
@@ -579,9 +564,6 @@
         }
 
 
-
-        // let intersect = ray.intersectObject(plane);
-        // console.log(intersection);
 
 
         function animate() {
@@ -605,34 +587,7 @@
             else if (intersect[0].distance < 10) {
                 camera.position.y += 1;
             }
-            //console.log("shoule be below ", intersect[0]);
-            //camera.position.y = intersect[0].point.y + 10;
-
-            // this does some interesting things. does kind of sink but only when pointer unlocked and 
-            // it is based on the lookat and not with a ray cast below the camera
-
-            // findFloor.set(camera.getWorldPosition(new THREE.Vector3), down);
-            // //  console.log("find ", findFloor);
-            // const floorIs = raycaster.intersectObjects(worldItems, false);
-            // floorDist = (floorIs.length) > 0 ? floorIs[0] : null;
-            // //console.log("floor dist ", floorDist.distance);
-            // //console.log("cam pos ", camera.position.y);
-            // // this looks like the raycaster is coming from the camera to the view not towards the ground, 
-            // // its also not being triggered anyways so who knows
-            // if (floorDist.distance < 50 || floorDist.distance > 100) {
-            //    // console.log("out of range");
-            //     if (floorDist.distance > 20) {
-            //         camera.position.y -= .1;
-            //     }
-            //     else if (floorDist.distance < 10) {
-            //         camera.position.y += .1;
-            //     }
-            // }
-
-
-
-
-
+           
 
             requestAnimationFrame(animate);
 
@@ -650,35 +605,10 @@
                     }
                 }
 
-                // raycaster.ray.origin.copy(controls.getObject().position);
-                //raycaster.ray.origin.y -= 10;
-
-                // const intersections = raycaster.intersectObjects(objects, false);
-
-                // const onObject = intersections.length > 0;
 
                 const delta = (time - prevTime) / 1000;
 
-                // velocity.x -= velocity.x * 10.0 * delta;
-                // velocity.z -= velocity.z * 10.0 * delta;
-
-                // //velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
-
-                // direction.z = Number(moveForward) - Number(moveBackward);
-                // direction.x = Number(moveRight) - Number(moveLeft);
-                // direction.normalize(); // this ensures consistent movements in all directions
-
-                // if (allowMove == true) {
-                //     if (moveForward) velocity.z -= direction.z * 400.0 * delta;
-                //     if (moveRight) velocity.x -= direction.x * 400.0 * delta;
-                //     if (moveBackward) velocity.z -= direction.z * 400.0 * delta;
-                //     if (moveLeft) velocity.x -= direction.x * 400.0 * delta;
-                //     controls.moveRight(- velocity.x * delta);
-                //     controls.moveForward(- velocity.z * delta);
-                // }
-
-
-
+          
                 // console.log(backDirection, 'BACK DIRECTION ');
                 // console.log(camera.position, 'CAMERA.POSITION');
 
@@ -711,21 +641,6 @@
                 // group.children[3].lookAt(backDirection);
                 // group.children[4].lookAt(backDirection);
                 // group.children[5].lookAt(backDirection);
-
-
-
-
-                //controls.getObject().position.y += (velocity.y * delta); // new behavior
-                //group.children[0].position.y += (velocity.y * delta); // new behavior
-
-
-                // if (controls.getObject().position.y < intersect[0].point.y + 5) {
-                //     console.log(intersect[0].point.y);
-                //     velocity.y = 10;
-                //     controls.getObject().position.y = intersect[0].point.y + 5;
-
-                //     canJump = true;
-
 
 
             }
@@ -810,32 +725,6 @@
 
 
 
-
-            // camera.applyMatrix4(rotateY);
-            //  camera.updateMatrixWorld();
-
-            // raycaster.setFromCamera(pointer, camera);
-
-            //     findFloor.set(camera.getWorldPosition(new THREE.Vector3), down);
-            //   //  console.log("find ", findFloor);
-            //     const floorIs = raycaster.intersectObjects(worldItems, false);
-            //     floorDist = (floorIs.length) > 0 ? floorIs[0] : null;
-            //     console.log("floor dist ", floorDist.distance);
-            //     //console.log("cam pos ", camera.position.y);
-            //     // this looks like the raycaster is coming from the camera to the view not towards the ground, 
-            //     // its also not being triggered anyways so who knows
-            //     if(floorDist.distance < 50 || floorDist.distance > 100){
-            //         console.log("out of range");
-            //         if (floorDist.distance > 20){
-            //             camera.position.y -= .1;
-            //         }
-            //         else if (floorDist.distance < 10){
-            //             camera.position.y += .1;
-            //         }
-            //     }
-
-
-
             const intersections = raycaster.intersectObjects(worldItems, false);
             intersection = (intersections.length) > 0 ? intersections[0] : null;
 
@@ -854,24 +743,7 @@
             }
 
 
-
-
-
-
-            // //console.log(intersection.distance);
-            // if (intersection !== null) {
-            //     // camera.position.y = floorDist;
-            //     if (intersection.distance < .5) {
-            //         allowMove = false;
-            //     }
-            //     else {
-            //         allowMove = true;
-            //     }
-            // }
-
             toggle += clock.getDelta();
-
-
 
             updateSize();
             requestAnimationFrame(render);
@@ -886,23 +758,6 @@
             rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
             rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
             checkPositions(sun, moon);
-
-
-
-            // Rotate while we rotate:
-            //moon.rotateX(turnSpeed * 0.1);
-
-            // // If we're rotating the camera change that here.
-            // if (animateRotation)
-            //     // The applyAxisAngle method rotates about an axis in space
-            //     camera.position.applyAxisAngle(new THREE.Vector3(0.0, 1.0, 0.0), turnSpeed * 0.1);
-            // if (animateOtherRotation)
-            //     camera.position.applyAxisAngle(new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * 0.1);
-
-            // camera.lookAt(new THREE.Vector3(xLookAt, yLookAt, zLookAt));
-
-            // requestAnimationFrame(animate);
-            // renderer.render(scene, camera);
 
             previousTime = time;
             renderer.render(scene, camera);
@@ -921,62 +776,6 @@
             }
         }
 
-
-
-        // function keyHandler(e) {
-        //     switch (e.keyCode) {
-        //         case 65: //L
-        //             break;
-        //         case 68:
-
-        //             break;
-        //         case 80:
-
-        //             break;
-        //         case 83:
-
-
-
-
-        //     }
-        // }
-
-
-
-
-
-
-        // document.addEventListener("keydown", keyHandler, false);
-
-
-
-
-        // raycaster.setFromCamera(pointer, camera);
-
-        // const intersects = raycaster.intersectObjects(scene.children, false);
-
-        // console.log(intersects);
-
-        // if (intersects.length > 0) {
-
-        //     if (INTERSECTED != intersects[0].object) {
-
-        //         if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-
-        //         INTERSECTED = intersects[0].object;
-        //         INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-        //         INTERSECTED.material.emissive.setHex(0xff0000);
-
-        //     }
-
-        // } else {
-
-        //     if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-
-        //     INTERSECTED = null;
-
-        // }
-
         let collisionRayCaster = new THREE.Raycaster();
 
 
@@ -985,47 +784,36 @@
             console.log('works');
             movement = 0;
             var keyCode = e.which || e.keyCode;
-            if (keyCode == 38) movement = "forward";
-            else if (keyCode == 37) movement = "left";
-            else if (keyCode == 39) movement = "right";
-            else if (keyCode == 40) movement = "backward";
+            if (keyCode == 87) movement = "forward";
+            else if (keyCode == 65) movement = "left";
+            else if (keyCode == 68) movement = "right";
+            else if (keyCode == 83) movement = "backward";
             if (movement != 0) moveAround();
         }
 
         var oldCamera;
+        let speed = 2;
         function moveAround() {
             oldCamera = camera.clone();
-            if (movement == "forward") camera.translateZ(-1);
-            if (movement == "left") camera.translateX(-1);
-            if (movement == "backward") camera.translateZ(1);
-            if (movement == "right") camera.translateX(1);
+            if (movement == "forward") camera.translateZ(-speed);
+            if (movement == "left") camera.translateX(-speed);
+            if (movement == "backward") camera.translateZ(speed);
+            if (movement == "right") camera.translateX(speed);
             collisionRayCaster.set(camera.position, oldCamera.position.normalize());
 
             console.log(oldCamera.position.normalize(), 'normalized old camera');
 
-            // let geom = new THREE.BoxGeometry(1,1,1);
-            // let materialbox = new THREE.MeshBasicMaterial();
-            // let meshbox = new THREE.Mesh(geom, materialbox);
-            // scene.add(meshbox);
-
-          // console.log(collisionRayCaster.intersectObjects(trees), 'intersect');
             if (collisionRayCaster.intersectObjects(trees).length > 0) {
                 console.log("does it get in");
-                if (movement == "forward") camera.translateZ(1);
-                if (movement == "left") camera.translateX(1);
-                if (movement == "backward") camera.translateZ(-1);
-                if (movement == "right") camera.translateX(-1);
+                if (movement == "forward") camera.translateZ(speed);
+                if (movement == "left") camera.translateX(speed);
+                if (movement == "backward") camera.translateZ(-speed);
+                if (movement == "right") camera.translateX(-speed);
             }
         };
 
 
         document.addEventListener('keydown', onDocumentKeyDown, false);
-
-
-
-
-
-
 
         animate();
         render();
