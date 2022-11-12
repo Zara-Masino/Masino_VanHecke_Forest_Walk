@@ -15,8 +15,10 @@
 
         var scene = new THREE.Scene();
         let raycaster = new THREE.Raycaster();
-        let trees = [];
+        let findFloor = new THREE.Raycaster();
 
+        let trees = [];
+        let allowMove = true;
         const pointer = new THREE.Vector2();
         let INTERSECTED;
         const spheres = [];
@@ -68,7 +70,7 @@
         //        renderer.shadowMap.type = THREE.BasicShadowMap;
 
         renderer.shadowMapSoft = true;
-        renderer.shadowMapType = THREE.PCFSoftShadowMap;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 
 
@@ -249,10 +251,10 @@
 
 
         var geometry1 = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
-        var material1 = new THREE.MeshPhysicalMaterial({ map: loader.load('land/water3.jpg') });
+        var material1 = new THREE.MeshPhysicalMaterial({ map: loader.load('land/water3.jpg')});
         var water = new THREE.Mesh(geometry1, material1);
         water.rotation.x = -Math.PI / 2;
-        water.position.y =-25;
+        water.position.y = -25;
         //water.receiveShadow = true;
         scene.add(water);
         console.log(water);
@@ -328,7 +330,7 @@
         // plane.rotation.x -= Math.PI / 2;
         // scene.add(plane);
         plane.castShadow = true;
-       // plane.receiveShadow = true;
+        // plane.receiveShadow = true;
         worldItems.push(plane);
         let turnSpeed = .1;
 
@@ -473,6 +475,9 @@
         // }
 
         //,console.log(trees);
+        let test = new makeTrees(0, 60);
+        trees.push(test);
+
 
 
 
@@ -571,11 +576,55 @@
         }
 
 
+
+        // let intersect = ray.intersectObject(plane);
+        // console.log(intersection);
+
+
         function animate() {
 
             camera.getWorldDirection(directionn)
 
             rearCamera(directionn);
+
+            let ray = new THREE.Raycaster();
+            var rayPos = new THREE.Vector3();
+            rayPos.set(camera.position.x, camera.position.y, camera.position.z);
+            var rayDir = new THREE.Vector3(0, -1, 0);
+            ray.set(rayPos, rayDir);
+            let intersect = ray.intersectObject(plane);
+
+
+            console.log(intersect[0]);
+            if (intersect[0].distance > 15) {
+                camera.position.y -= 1;
+            }
+            else if (intersect[0].distance < 5) {
+                camera.position.y += 1;
+            }
+            //console.log("shoule be below ", intersect[0]);
+            //camera.position.y = intersect[0].point.y + 10;
+
+            // this does some interesting things. does kind of sink but only when pointer unlocked and 
+            // it is based on the lookat and not with a ray cast below the camera
+
+            // findFloor.set(camera.getWorldPosition(new THREE.Vector3), down);
+            // //  console.log("find ", findFloor);
+            // const floorIs = raycaster.intersectObjects(worldItems, false);
+            // floorDist = (floorIs.length) > 0 ? floorIs[0] : null;
+            // //console.log("floor dist ", floorDist.distance);
+            // //console.log("cam pos ", camera.position.y);
+            // // this looks like the raycaster is coming from the camera to the view not towards the ground, 
+            // // its also not being triggered anyways so who knows
+            // if (floorDist.distance < 50 || floorDist.distance > 100) {
+            //    // console.log("out of range");
+            //     if (floorDist.distance > 20) {
+            //         camera.position.y -= .1;
+            //     }
+            //     else if (floorDist.distance < 10) {
+            //         camera.position.y += .1;
+            //     }
+            // }
 
 
 
@@ -610,18 +659,22 @@
                 velocity.x -= velocity.x * 10.0 * delta;
                 velocity.z -= velocity.z * 10.0 * delta;
 
-                velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+                //velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
 
                 direction.z = Number(moveForward) - Number(moveBackward);
                 direction.x = Number(moveRight) - Number(moveLeft);
                 direction.normalize(); // this ensures consistent movements in all directions
 
-                if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
-                if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
+                if (allowMove == true) {
+                    if (moveForward) velocity.z -= direction.z * 400.0 * delta;
+                    if (moveRight) velocity.x -= direction.x * 400.0 * delta;
+                    if (moveBackward) velocity.z -= direction.z * 400.0 * delta;
+                    if (moveLeft) velocity.x -= direction.x * 400.0 * delta;
+                    controls.moveRight(- velocity.x * delta);
+                    controls.moveForward(- velocity.z * delta);
+                }
 
 
-                controls.moveRight(- velocity.x * delta);
-                controls.moveForward(- velocity.z * delta);
 
                 // console.log(backDirection, 'BACK DIRECTION ');
                 // console.log(camera.position, 'CAMERA.POSITION');
@@ -659,17 +712,18 @@
 
 
 
-                controls.getObject().position.y += (velocity.y * delta); // new behavior
+                //controls.getObject().position.y += (velocity.y * delta); // new behavior
                 //group.children[0].position.y += (velocity.y * delta); // new behavior
 
-                if (controls.getObject().position.y < 60) {
 
-                    velocity.y = 0;
-                    controls.getObject().position.y = 60;
+                // if (controls.getObject().position.y < intersect[0].point.y + 5) {
+                //     console.log(intersect[0].point.y);
+                //     velocity.y = 10;
+                //     controls.getObject().position.y = intersect[0].point.y + 5;
 
-                    canJump = true;
+                //     canJump = true;
 
-                }
+
 
             }
 
@@ -746,6 +800,8 @@
         document.addEventListener('keydown', onKeyDown);
         document.addEventListener('keyup', onKeyUp);
 
+        let down = new THREE.Vector3(0, -1, 0);
+        let floorDist = null;
 
         function render() {
 
@@ -757,14 +813,23 @@
 
             // raycaster.setFromCamera(pointer, camera);
 
-
-            raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
-            //console.log('distance', calcDistance(camera.position, sphere));
-            let distance = calcDistance(camera.position, sphere);
-
-            sphere.scale.set(distance * .5, distance * .5, distance * .5);
-
-
+            //     findFloor.set(camera.getWorldPosition(new THREE.Vector3), down);
+            //   //  console.log("find ", findFloor);
+            //     const floorIs = raycaster.intersectObjects(worldItems, false);
+            //     floorDist = (floorIs.length) > 0 ? floorIs[0] : null;
+            //     console.log("floor dist ", floorDist.distance);
+            //     //console.log("cam pos ", camera.position.y);
+            //     // this looks like the raycaster is coming from the camera to the view not towards the ground, 
+            //     // its also not being triggered anyways so who knows
+            //     if(floorDist.distance < 50 || floorDist.distance > 100){
+            //         console.log("out of range");
+            //         if (floorDist.distance > 20){
+            //             camera.position.y -= .1;
+            //         }
+            //         else if (floorDist.distance < 10){
+            //             camera.position.y += .1;
+            //         }
+            //     }
 
 
 
@@ -772,12 +837,33 @@
             intersection = (intersections.length) > 0 ? intersections[0] : null;
 
             if (toggle > 0.001 && intersection !== null) {
-
                 spheres[spheresIndex].position.copy(intersection.point);
                 toggle = 0;
 
             }
 
+            raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
+            //console.log('distance', calcDistance(camera.position, sphere));
+            let distance = calcDistance(camera.position, sphere);
+            if (distance != null) {
+                //console.log(distance);
+                sphere.scale.set(distance * .5, distance * .5, distance * .5);
+            }
+
+
+
+
+
+            // //console.log(intersection.distance);
+            // if (intersection !== null) {
+            //     // camera.position.y = floorDist;
+            //     if (intersection.distance < .5) {
+            //         allowMove = false;
+            //     }
+            //     else {
+            //         allowMove = true;
+            //     }
+            // }
 
             toggle += clock.getDelta();
 
