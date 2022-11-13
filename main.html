@@ -15,13 +15,16 @@
 
         var scene = new THREE.Scene();
         let raycaster = new THREE.Raycaster();
-        let findFloor = new THREE.Raycaster();
 
+        
+        let group = new THREE.Group();
+
+        var movement;
+        var oldCamera;
+        let speed = 2;
+        let collisionRayCaster = new THREE.Raycaster();
         let trees = [];
         let collision = [];
-        let allowMove = true;
-        const pointer = new THREE.Vector2();
-        let INTERSECTED;
         const spheres = [];
         const spheresIndex = 0;
         let worldItems = [];
@@ -30,20 +33,7 @@
         let toggle = 0;
         let clock = new THREE.Clock();
 
-        let moveForward = false;
-        let moveBackward = false;
-        let moveLeft = false;
-        let moveRight = false;
-        let canJump = false;
-
         let prevTime = performance.now();
-        const velocity = new THREE.Vector3();
-        const direction = new THREE.Vector3();
-        const vertex = new THREE.Vector3();
-        const color = new THREE.Color();
-
-        let directionn = new THREE.Vector3();
-        let backDirection = new THREE.Vector3();
 
         let sunColors = [0xf7e2ba, 0xffdaa8, 0xf8cb7c, 0xfdb25b, 0xfa9e4d];
         let moonColor = [0xdde2e5];
@@ -52,7 +42,6 @@
         let windowWidth = window.innerWidth;
         let windowHeight = window.innerHeight;
 
-        let yheight;
 
         const loader = new THREE.TextureLoader();
 
@@ -70,51 +59,53 @@
         // If you want the render to span the window, uncomment this
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
-        //        renderer.shadowMap.type = THREE.BasicShadowMap;
-
         renderer.shadowMapSoft = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 
-
         var controls = new PointerLockControls(camera, document.body);
-
         document.addEventListener('click', function () {
             controls.lock();
         });
 
 
 
-        document.addEventListener('mousemove', onPointerMove);
-
-
-        function onPointerMove(event) {
-
-            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-            pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
-
-        }
+        const cursorGeom = new THREE.SphereGeometry(0.02, 16, 16);
+        const cursorMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const cursor = new THREE.Mesh(cursorGeom, cursorMat);
+        scene.add(cursor);
+        spheres.push(cursor);
 
 
 
-        const sphereGeometry = new THREE.SphereGeometry(0.02, 16, 16);
-        const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-
-        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        scene.add(sphere);
-        spheres.push(sphere);
-
-
-
-        var world = new THREE.BoxGeometry(900, 900, 900);
-        var wmat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false, side: THREE.DoubleSide });
+        var cubeGeom = new THREE.BoxGeometry(900, 900, 900);
+        var cubeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false, side: THREE.DoubleSide });
 
         /* Cause the material to be visible for inside and outside */
-        wmat.side = THREE.BackSide;
+        cubeMat.side = THREE.BackSide;
 
-        var cube = new THREE.Mesh(world, wmat);
+        var cube = new THREE.Mesh(cubeGeom, cubeMat);
         scene.add(cube);
         worldItems.push(cube);
+
+        
+        var waterGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
+        var waterMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/water3.jpg') });
+        var water = new THREE.Mesh(waterGeom, waterMat);
+        water.rotation.x = -Math.PI / 2;
+        water.position.y = -25;
+        water.receiveShadow = true;
+        scene.add(water);
+       
+
+
+        var terrainGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
+        var terrainMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/sand3.jpg') });
+        var terrain = new THREE.Mesh(terrainGeom, terrainMat);
+        terrain.rotation.x = -Math.PI / 2;
+        scene.add(terrain);
+
+        
 
 
 
@@ -133,7 +124,6 @@
             this.bulbLight.position.set(x, y, z); //Positions the bulblight 
             this.bulbLight.castShadow = true; //Casts shadow from the bulb light
             this.bulbLight.shadow.bias = - 0.0005; // reduces self-shadowing on double-sided objects
-            //  this.bulbLight.shadow.bias = - 0.0005; // reduces self-shadowing on double-sided objects
             this.bulbLight.shadow.radius = 8;
             this.bulbLight.shadow.mapSize.width = 2048; // You have there 4K no need to go over 2K
 
@@ -146,9 +136,7 @@
             scene.add(this.bulbLight); //Adds bulb light to the scene
         }
 
-        // makeLights(0xacdef3, 0);
 
-        //makeLights(skyColors[4], 4);
         let moon = new makeLights(moonColor[0], -255, -255, 0, .1);
         let sun = new makeLights(sunColors[4], 255, 255, 0, 1);
         worldItems.push(sun.bulbLight);
@@ -253,84 +241,60 @@
 
 
 
-        var geometry1 = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
-        var material1 = new THREE.MeshPhysicalMaterial({ map: loader.load('land/water3.jpg') });
-        var water = new THREE.Mesh(geometry1, material1);
-        water.rotation.x = -Math.PI / 2;
-        water.position.y = -25;
-        //water.receiveShadow = true;
-        scene.add(water);
-        //(water);
+        
 
-
-        var geometry = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
-        var material = new THREE.MeshPhysicalMaterial({ map: loader.load('land/sand3.jpg') });
-        var plane = new THREE.Mesh(geometry, material);
-        plane.rotation.x = -Math.PI / 2;
-        scene.add(plane);
-        // console.log(plane);
-
-        var peak = 60;
-        var vertices = plane.geometry.attributes.position.array;
+        var peak = 30;
+        var vertices = terrain.geometry.attributes.position.array;
         for (var i = 0; i <= vertices.length; i += 3) {
             vertices[i + 2] = peak * Math.random();
         }
-        plane.geometry.attributes.position.needsUpdate = true;
-        plane.geometry.computeVertexNormals();
-
-
-
-        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
-        let planeMaterial = new THREE.ShadowMaterial();
-        planeMaterial.opacity = 0.5;
-        var shadowPlane = new THREE.Mesh(geometry, planeMaterial);
-        shadowPlane.receiveShadow = true;
-        shadowPlane.position.copy(plane.position);
-        shadowPlane.rotation.copy(plane.rotation);
-        scene.add(shadowPlane);
-
-
-        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
-        let waterMaterial = new THREE.ShadowMaterial();
-        waterMaterial.opacity = 0.5;
-        var waterShadow = new THREE.Mesh(geometry1, waterMaterial);
-        waterShadow.receiveShadow = true;
-        waterShadow.position.copy(water.position);
-        waterShadow.rotation.copy(water.rotation);
-        scene.add(waterShadow);
-
-        // console.log(waterShadow, 'WATER');
-
-
+        terrain.geometry.attributes.position.needsUpdate = true;
+        terrain.geometry.computeVertexNormals();
 
 
         var perlin = new Perlin();
         var peak = 30;
         var smoothing = 300;
-        var vertices = plane.geometry.attributes.position.array;
+        var vertices = terrain.geometry.attributes.position.array;
         for (var i = 0; i <= vertices.length; i += 3) {
             vertices[i + 2] = peak * perlin.noise(
                 vertices[i] / smoothing,
                 vertices[i + 1] / smoothing
             );
         }
-        plane.geometry.attributes.position.needsUpdate = true;
-        plane.geometry.computeVertexNormals();
+        terrain.geometry.attributes.position.needsUpdate = true;
+        terrain.geometry.computeVertexNormals();
 
 
-        plane.castShadow = true;
-        // plane.receiveShadow = true;
-        worldItems.push(plane);
-        let turnSpeed = .1;
+        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
+        let shadowTerrainMat = new THREE.ShadowMaterial();
+        shadowTerrainMat.opacity = 0.5;
+        var shadowTerrain = new THREE.Mesh(terrainGeom, shadowTerrainMat);
+        shadowTerrain.receiveShadow = true;
+        shadowTerrain.position.copy(terrain.position);
+        shadowTerrain.rotation.copy(terrain.rotation);
+        scene.add(shadowTerrain);
+
+
+        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
+        let shadowWaterMat = new THREE.ShadowMaterial();
+        shadowWaterMat.opacity = 0.5;
+        var shadowWater = new THREE.Mesh(waterGeom, shadowWaterMat);
+        shadowWater.receiveShadow = true;
+        shadowWater.position.copy(water.position);
+        shadowWater.rotation.copy(water.rotation);
+        scene.add(shadowWater);
+
+        
+
+        terrain.castShadow = true;
+        worldItems.push(terrain);
 
         function rotateAboutWorldAxis(object, axis, angle) {
-            var rotationMatrix = new THREE.Matrix4();
-            rotationMatrix.makeRotationAxis(axis.normalize(), angle);
-            var currentPos = new THREE.Vector4(object.position.x, object.position.y, object.position.z, 1);
-            var newPos = currentPos.applyMatrix4(rotationMatrix);
-            object.position.x = newPos.x;
-            object.position.y = newPos.y;
-            object.position.z = newPos.z;
+            quaternion.setFromAxisAngle(axis, THREE.Math.degToRad(15));
+            console.log(quaternion);
+            sun.bulbLight.position.applyQuaternion(quaternion);
+            moon.bulbLight.position.applyQuaternion(quaternion);
         }
 
 
@@ -365,7 +329,6 @@
             }
 
             if (sunLight.position.y > 300) {
-                //  console.log(sunLight.position.y, 'sun position AT highest');
 
                 renderer.setClearColor(skyColors[5]);
                 cube.material.color.setHex(skyColors[5]);
@@ -373,32 +336,27 @@
                 sunMaterial.emissive.set(sunColors[0]);
             }
             else if (240 <= sunLight.position.y && sunLight.position.y < 300) {
-                //  console.log(sunLight.position.y, 'sun position AT MID');
                 renderer.setClearColor(skyColors[4]);
                 cube.material.color.setHex(skyColors[4]);
                 sunLight.color.setHex(sunColors[1]);
                 sunMaterial.emissive.set(sunColors[1]);
             }
             else if (180 <= sunLight.position.y && sunLight.position.y < 240) {
-                //  console.log(sunLight.position.y, 'sun position AT second MID');
                 sunLight.color.setHex(sunColors[2]);
                 sunMaterial.emissive.set(sunColors[2]);
             }
             else if (120 <= sunLight.position.y && sunLight.position.y < 180) {
-                // console.log(sunLight.position.y, 'sun position AT second to last lowest');
                 renderer.setClearColor(skyColors[3]);
                 cube.material.color.setHex(skyColors[3]);
                 sunLight.color.setHex(sunColors[3]);
                 sunMaterial.emissive.set(sunColors[3]);
             }
             else if (sunLight.position.y < 120 && sunLight.position.y > -.5) {
-                //console.log(sunLight.position.y, 'LAST');
                 sunLight.color.setHex(sunColors[4]);
                 sunMaterial.emissive.set(sunColors[4]);
                 sunLight.intensity = 1;
             }
             else if (sunLight.position.y < -.5) {
-                //console.log(sunLight.position.y, 'turn sun off');
                 sunLight.intensity = 0;
             }
 
@@ -418,27 +376,7 @@
             )
             return distance; //Returns distance
         }
-        //point 2 is lookat
-        //point is camera
-        function calcBehind(point, point2) {
-            //This calculates the distance of two points based on the distance formula
-            // console.log(point, 'POINT1 CHECK');
-            // console.log(point2, 'POINT2 CHECK');
-            const distance = Math.sqrt(
-                (point.x - point2.x) * (point.x - point2.x) +
-                (point.y - point2.y) * (point.y - point2.y) +
-                (point.z - point2.z) * (point.z - point2.z)
-            )
-
-            // console.log(distance, 'DISTANCE CHECK');
-
-
-            point2.x = distance * .05;
-            point2.y = distance * .05;
-            point2.z = distance * .05;
-
-            return point2; //Returns distance
-        }
+    
 
         function makeTrees(x, y) {
             let testgeometry = new THREE.SphereGeometry(25, 32, 32);
@@ -491,18 +429,16 @@
             }
         }
 
-        let group = new THREE.Group();
-
         function makeBody() {
 
             let wholeBodyMaterial = new THREE.MeshPhongMaterial({
                 //color: 0x000000,
                 //transparent: true,
                 blending: THREE.AdditiveBlending,
-                colorWrite:false,
+                colorWrite: false,
                 depthWrite: false
 
-             });
+            });
 
             const headGeometry = new THREE.SphereGeometry(4, 32, 32);
             const headMaterial = wholeBodyMaterial;
@@ -513,7 +449,7 @@
             head.position.set(0, 2, 0);
 
             let bodyGeometry = new THREE.BoxGeometry(3, 8, 3)
-            const bodyMaterial =wholeBodyMaterial;
+            const bodyMaterial = wholeBodyMaterial;
             let body = new THREE.Mesh(bodyGeometry, wholeBodyMaterial)
             body.castShadow = true;
             body.receiveShadow = true;
@@ -561,39 +497,30 @@
         }
 
         makeBody();
-
         scene.add(group);
 
         function animate() {
-
-
             let ray = new THREE.Raycaster();
             var rayPos = new THREE.Vector3();
             rayPos.set(camera.position.x, camera.position.y, camera.position.z);
             var rayDir = new THREE.Vector3(0, -1, 0);
             ray.set(rayPos, rayDir);
-            let intersect = ray.intersectObject(plane);
+            let intersect = ray.intersectObject(terrain);
 
             if (intersect.length != 0) {
-                //console.log(intersect, 'INTERSECT');
-
-
                 camera.position.y = intersect[0].point.y + 20;
             }
             else {
                 camera.position.y = 50;
             }
 
-
             requestAnimationFrame(animate);
 
             const time = performance.now();
 
             if (controls.isLocked === true) {
-
-
                 for (let i = 0; i < trees.length; i++) {
-                    if (collisionDetection(sphere.position, trees[i]) == true) {
+                    if (collisionDetection(cursor.position, trees[i]) == true) {
                         trees[i].material.emissive.setHex(0xff0000);
                     }
                     else {
@@ -605,14 +532,13 @@
                 const delta = (time - prevTime) / 1000;
 
 
-                let newPos = calcBehind(camera.position, backDirection);
+                
 
-           
+
                 let yPos = camera.position.y - 5;
                 group.position.y = (yPos);
                 group.position.z = (camera.position.z);
                 group.position.x = (camera.position.x);
-              
                 group.setRotationFromMatrix(camera.matrix);
 
 
@@ -626,80 +552,9 @@
 
 
 
-
-        const onKeyDown = function (event) {
-
-            switch (event.code) {
-
-                case 'ArrowUp':
-                case 'KeyW':
-                    moveForward = true;
-                    break;
-
-                case 'ArrowLeft':
-                case 'KeyA':
-                    moveLeft = true;
-                    break;
-
-                case 'ArrowDown':
-                case 'KeyS':
-                    moveBackward = true;
-                    break;
-
-                case 'ArrowRight':
-                case 'KeyD':
-                    moveRight = true;
-                    break;
-
-                case 'Space':
-                    if (canJump === true) velocity.y += 350;
-                    canJump = false;
-                    break;
-
-            }
-
-        };
-
-        const onKeyUp = function (event) {
-
-            switch (event.code) {
-
-                case 'ArrowUp':
-                case 'KeyW':
-                    moveForward = false;
-                    break;
-
-                case 'ArrowLeft':
-                case 'KeyA':
-                    moveLeft = false;
-                    break;
-
-                case 'ArrowDown':
-                case 'KeyS':
-                    moveBackward = false;
-                    break;
-
-                case 'ArrowRight':
-                case 'KeyD':
-                    moveRight = false;
-                    break;
-
-            }
-
-        };
-
-        document.addEventListener('keydown', onKeyDown);
-        document.addEventListener('keyup', onKeyUp);
-
-        let down = new THREE.Vector3(0, -1, 0);
-        let floorDist = null;
-
         function render() {
 
-            // console.log(group.children[2].position, 'arm position');
-
-
-
+  
             const intersections = raycaster.intersectObjects(worldItems, false);
             intersection = (intersections.length) > 0 ? intersections[0] : null;
 
@@ -710,11 +565,9 @@
             }
 
             raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
-            //console.log('distance', calcDistance(camera.position, sphere));
-            let distance = calcDistance(camera.position, sphere);
+            let distance = calcDistance(camera.position, cursor);
             if (distance != null) {
-                //console.log(distance);
-                sphere.scale.set(distance * .5, distance * .5, distance * .5);
+                cursor.scale.set(distance * .5, distance * .5, distance * .5);
             }
 
 
@@ -724,14 +577,13 @@
             requestAnimationFrame(render);
 
             const time = performance.now();
-
             const delta = time - previousTime;
 
 
 
             // We need to translate the object back to the origin before rotating it:
-            rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
-            rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
+            //rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
+            //rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
             checkPositions(sun, moon);
 
             previousTime = time;
@@ -751,10 +603,10 @@
             }
         }
 
-        let collisionRayCaster = new THREE.Raycaster();
+        
 
 
-        var movement;
+      
         function onDocumentKeyDown(e) {
             //console.log('works');
             movement = 0;
@@ -766,8 +618,7 @@
             if (movement != 0) moveAround();
         }
 
-        var oldCamera;
-        let speed = 2;
+        
         function moveAround() {
             oldCamera = camera.clone();
             if (movement == "forward") camera.translateZ(-speed);
@@ -776,8 +627,6 @@
             if (movement == "right") camera.translateX(speed);
             collisionRayCaster.set(camera.position, oldCamera.position.normalize());
 
-
-            // console.log(oldCamera.position.normalize(), 'normalized old camera');
 
             if (collisionRayCaster.intersectObjects(trees).length > 0) {
                 console.log("does it get in");
