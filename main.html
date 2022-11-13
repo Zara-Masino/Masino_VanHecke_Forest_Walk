@@ -15,6 +15,9 @@
 
         var scene = new THREE.Scene();
         let raycaster = new THREE.Raycaster();
+        let quaternion = new THREE.Quaternion();
+        let axis = new THREE.Vector3(0,0,1);
+        let move = 0;
 
         
         let group = new THREE.Group();
@@ -50,7 +53,6 @@
         camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0));
         camera.position.set(0, 80, 10);
         scene.add(camera);
-        let previousTime = performance.now();
 
         var renderer = new THREE.WebGLRenderer({ canvas: myCanvas, antialias: true });
         renderer.setClearColor(0xADD8E6);
@@ -290,9 +292,8 @@
         terrain.castShadow = true;
         worldItems.push(terrain);
 
-        function rotateAboutWorldAxis(object, axis, angle) {
+        function rotateAboutWorldAxis() {
             quaternion.setFromAxisAngle(axis, THREE.Math.degToRad(15));
-            console.log(quaternion);
             sun.bulbLight.position.applyQuaternion(quaternion);
             moon.bulbLight.position.applyQuaternion(quaternion);
         }
@@ -421,7 +422,7 @@
             let distance = calcDistance(point, shape); //Calculates the distance between the camera's position
             //and an object
             if (distance < shape.geometry.boundingSphere.radius) { //If the distance or camera is within the objects
-                console.log("HELLER");
+                //console.log("HELLER");
                 return true;
             }
             else {
@@ -493,7 +494,6 @@
             leftLeg.rotateZ(-Math.PI / 6);
             leftLeg.position.set(-3.3, -12, 0);
             group.add(leftLeg);
-            console.log(group.children[0].lookAt, 'GROUP LOOK AT');
         }
 
         makeBody();
@@ -518,6 +518,13 @@
 
             const time = performance.now();
 
+            const delta = (time - prevTime) / 1000;
+                move += delta; 
+                if (move > 10){
+                    rotateAboutWorldAxis();
+                    move = 0;
+                }
+
             if (controls.isLocked === true) {
                 for (let i = 0; i < trees.length; i++) {
                     if (collisionDetection(cursor.position, trees[i]) == true) {
@@ -527,10 +534,6 @@
                         trees[i].material.emissive.setHex(0x000000);
                     }
                 }
-
-
-                const delta = (time - prevTime) / 1000;
-
 
                 
 
@@ -576,9 +579,6 @@
             updateSize();
             requestAnimationFrame(render);
 
-            const time = performance.now();
-            const delta = time - previousTime;
-
 
 
             // We need to translate the object back to the origin before rotating it:
@@ -586,7 +586,6 @@
             //rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
             checkPositions(sun, moon);
 
-            previousTime = time;
             renderer.render(scene, camera);
         }
 
@@ -608,7 +607,6 @@
 
       
         function onDocumentKeyDown(e) {
-            //console.log('works');
             movement = 0;
             var keyCode = e.which || e.keyCode;
             if (keyCode == 87) movement = "forward";
@@ -629,7 +627,6 @@
 
 
             if (collisionRayCaster.intersectObjects(trees).length > 0) {
-                console.log("does it get in");
                 if (movement == "forward") camera.translateZ(speed);
                 if (movement == "left") camera.translateX(speed);
                 if (movement == "backward") camera.translateZ(-speed);
