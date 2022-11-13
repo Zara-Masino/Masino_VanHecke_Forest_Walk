@@ -52,6 +52,8 @@
         let windowWidth = window.innerWidth;
         let windowHeight = window.innerHeight;
 
+        let yheight;
+
         const loader = new THREE.TextureLoader();
 
 
@@ -492,65 +494,65 @@
         let group = new THREE.Group();
 
         function makeBody() {
-            const headGeometry = new THREE.SphereGeometry(10, 32, 32);
+            const headGeometry = new THREE.SphereGeometry(4, 32, 32);
             const headMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
             const head = new THREE.Mesh(headGeometry, headMaterial);
             head.castShadow = true;
             head.receiveShadow = true;
             group.add(head);
-            head.position.set(1, 1.65, 1);
+            head.position.set(0, 2, 0);
 
-            let bodyGeometry = new THREE.BoxGeometry(0.35, 1, 0.35)
+            let bodyGeometry = new THREE.BoxGeometry(3, 8, 3)
             const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
             let body = new THREE.Mesh(bodyGeometry, bodyMaterial)
             body.castShadow = true;
             body.receiveShadow = true;
-            body.position.set(1, 1, 1);
+            body.position.set(0, -4, 0);
             group.add(body)
 
 
-            let leftArmGeometry = new THREE.BoxGeometry(0.15, .75, 0.15)
+            let leftArmGeometry = new THREE.BoxGeometry(1.2, 8, 1.2)
             const leftArmMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
             let leftArm = new THREE.Mesh(leftArmGeometry, leftArmMaterial)
             leftArm.castShadow = true;
             leftArm.receiveShadow = true;
             leftArm.rotateZ(-Math.PI / 3);
-            leftArm.position.set(.60, .9, 1);
+            leftArm.position.set(-3.3, -3.5, 0);
             group.add(leftArm);
 
-            let rightArmGeometry = new THREE.BoxGeometry(0.15, .75, 0.15)
+            let rightArmGeometry = new THREE.BoxGeometry(1.2, 8, 1.2)
             const rightArmMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
             let rightArm = new THREE.Mesh(rightArmGeometry, rightArmMaterial)
             rightArm.castShadow = true;
             rightArm.receiveShadow = true;
             rightArm.rotateZ(Math.PI / 3);
-            rightArm.position.set(1.4, .9, 1);
+            rightArm.position.set(3.3, -3.5, 0);
             group.add(rightArm);
 
 
-            let rightLegGeometry = new THREE.BoxGeometry(0.25, 1.25, 0.25)
+            let rightLegGeometry = new THREE.BoxGeometry(2, 10, 2)
             const rightLegMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
             let rightLeg = new THREE.Mesh(rightLegGeometry, rightLegMaterial)
             rightLeg.castShadow = true;
             rightLeg.receiveShadow = true;
             rightLeg.rotateZ(Math.PI / 6);
-            rightLeg.position.set(1.4, 0, 1);
+            rightLeg.position.set(3.3, -12, 0);
             group.add(rightLeg);
 
-            let leftLegGeometry = new THREE.BoxGeometry(0.25, 1.25, 0.25)
+            let leftLegGeometry = new THREE.BoxGeometry(2, 10, 2)
             const leftLegMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
             let leftLeg = new THREE.Mesh(leftLegGeometry, leftLegMaterial)
             leftLeg.castShadow = true;
             leftLeg.receiveShadow = true;
             leftLeg.rotateZ(-Math.PI / 6);
-            leftLeg.position.set(.60, 0, 1);
+            leftLeg.position.set(-3.3, -12, 0);
             group.add(leftLeg);
             console.log(group.children[0].lookAt, 'GROUP LOOK AT');
         }
 
         // console.log('group', group.children[0]);
 
-        // makeBody();
+         makeBody();
 
         //group.add(camera);
 
@@ -588,14 +590,20 @@
             // console.log(intersect[0]);
           // console.log(intersect, 'intersect');
             if (intersect.length != 0) {
+                console.log(intersect, 'INTERSECT');
 
+                // if (intersect[0].distance > 52) {
+                //     camera.position.y -= .5;
+                // }
+                // else if (intersect[0].distance < 50) {
+                //     camera.position.y += .5;
+                // }
 
-                if (intersect[0].distance > 20) {
-                    camera.position.y -= 1;
-                }
-                else if (intersect[0].distance < 10) {
-                    camera.position.y += 1;
-                }
+                camera.position.y = intersect[0].point.y+50;
+            }
+            else {
+                camera.position.y=50;
+              //  console.log("no distance");
             }
 
 
@@ -620,9 +628,9 @@
 
 
                 // console.log(backDirection, 'BACK DIRECTION ');
-                // console.log(camera.position, 'CAMERA.POSITION');
+                 console.log(camera.position, 'CAMERA.POSITION');
 
-                //let newPos = calcBehind(camera.position, backDirection);
+                let newPos = calcBehind(camera.position, backDirection);
 
                 // console.log(newPos.x, 'NEW POS X');
                 // console.log(newPos.y, 'NEW POS Y');
@@ -643,6 +651,24 @@
                 // group.children[3].position.z = (backDirection.z);
                 // group.children[4].position.z = (backDirection.z);
                 // group.children[5].position.z = (backDirection.z);
+
+
+               // group.children[0].position.y = (camera.position.y);
+                 let yPos = camera.position.y-2;
+                group.position.y = (yPos);
+                group.position.z = (camera.position.z);
+                group.position.x = (camera.position.x);
+
+                // group.children[0].position.x = camera.position.x;
+                // group.children[0].position.z = camera.position.z;
+                // group.children[0].position.y = camera.position.y;
+
+               // group.children[0].position.z = (backDirection.z);
+                // group.children[1].position.y = (backDirection.z);
+                // group.children[2].position.y = (backDirection.z);
+                // group.children[3].position.y = (backDirection.z);
+                // group.children[4].position.y = (backDirection.z);
+                // group.children[5].position.y = (backDirection.z);
 
 
                 // group.children[0].lookAt(backDirection);
@@ -733,7 +759,7 @@
 
         function render() {
 
-            console.log(camera.position, 'camera position');
+           // console.log(group.children[2].position, 'arm position');
 
 
 
@@ -812,6 +838,7 @@
             if (movement == "backward") camera.translateZ(speed);
             if (movement == "right") camera.translateX(speed);
             collisionRayCaster.set(camera.position, oldCamera.position.normalize());
+            
 
             console.log(oldCamera.position.normalize(), 'normalized old camera');
 
