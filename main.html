@@ -12,19 +12,22 @@
         import * as THREE from "http://cs.merrimack.edu/~stuetzlec/three.js-master/build/three.module.js";
         import { PointerLockControls } from 'http://cs.merrimack.edu/~stuetzlec/three.js-master/examples/jsm/controls/PointerLockControls.js';
 
-
+        let moving = false;
         var scene = new THREE.Scene();
         let raycaster = new THREE.Raycaster();
         let quaternion = new THREE.Quaternion();
-        let axis = new THREE.Vector3(0,0,1);
+        let axis = new THREE.Vector3(0, 0, 1);
         let move = 0;
+        let change = 0;
+        let sinwave = 0;
+        let displacement = 0;
 
-        
+
         let group = new THREE.Group();
 
         var movement;
         var oldCamera;
-        let speed = 2;
+        let speed = 10;
         let collisionRayCaster = new THREE.Raycaster();
         let trees = [];
         let collision = [];
@@ -49,7 +52,7 @@
         const loader = new THREE.TextureLoader();
 
 
-        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
         camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0));
         camera.position.set(0, 80, 10);
         scene.add(camera);
@@ -80,7 +83,7 @@
 
 
 
-        var cubeGeom = new THREE.BoxGeometry(900, 900, 900);
+        var cubeGeom = new THREE.BoxGeometry(1200, 1200, 1200);
         var cubeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false, side: THREE.DoubleSide });
 
         /* Cause the material to be visible for inside and outside */
@@ -90,24 +93,25 @@
         scene.add(cube);
         worldItems.push(cube);
 
-        
+
         var waterGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
-        var waterMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/water3.jpg') });
+        var waterMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/water4.jpg') });
         var water = new THREE.Mesh(waterGeom, waterMat);
         water.rotation.x = -Math.PI / 2;
-        water.position.y = -25;
-        water.receiveShadow = true;
+        water.position.y = -15;
+        //water.receiveShadow = true;
         scene.add(water);
-       
+        worldItems.push(water);
 
 
-        var terrainGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
+
+        var terrainGeom = new THREE.PlaneBufferGeometry(1200, 1200, 256, 256);
         var terrainMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/sand3.jpg') });
         var terrain = new THREE.Mesh(terrainGeom, terrainMat);
         terrain.rotation.x = -Math.PI / 2;
         scene.add(terrain);
 
-        
+
 
 
 
@@ -139,8 +143,8 @@
         }
 
 
-        let moon = new makeLights(moonColor[0], -255, -255, 0, .1);
-        let sun = new makeLights(sunColors[4], 255, 255, 0, 1);
+        let moon = new makeLights(moonColor[0], -420, -420, 0, .1);
+        let sun = new makeLights(sunColors[4], 420, 420, 0, 1);
         worldItems.push(sun.bulbLight);
         worldItems.push(moon.bulbLight);
 
@@ -243,7 +247,7 @@
 
 
 
-        
+
 
         var peak = 30;
         var vertices = terrain.geometry.attributes.position.array;
@@ -287,12 +291,13 @@
         shadowWater.rotation.copy(water.rotation);
         scene.add(shadowWater);
 
-        
+
 
         terrain.castShadow = true;
         worldItems.push(terrain);
 
         function rotateAboutWorldAxis() {
+            console.log(sun.bulbLight.position);
             quaternion.setFromAxisAngle(axis, THREE.Math.degToRad(15));
             sun.bulbLight.position.applyQuaternion(quaternion);
             moon.bulbLight.position.applyQuaternion(quaternion);
@@ -305,12 +310,12 @@
 
             let sunMaterial = sun.bulbMat;
             if (moonLight.position.y > 300) {
-                renderer.setClearColor(skyColors[0]);
+                //renderer.setClearColor(skyColors[0]);
                 cube.material.color.setHex(skyColors[0]);
                 moonLight.intensity = .8;
             }
             else if (240 <= moonLight.position.y && moonLight.position.y < 300) {
-                renderer.setClearColor(skyColors[1]);
+              //  renderer.setClearColor(skyColors[1]);
                 cube.material.color.setHex(skyColors[1]);
                 moonLight.intensity = .7;
             }
@@ -318,7 +323,7 @@
                 moonLight.intensity = .6;
             }
             else if (120 <= moonLight.position.y && moonLight.position.y < 180) {
-                renderer.setClearColor(skyColors[2]);
+               // renderer.setClearColor(skyColors[2]);
                 cube.material.color.setHex(skyColors[2]);
                 moonLight.intensity = .5;
             }
@@ -331,13 +336,13 @@
 
             if (sunLight.position.y > 300) {
 
-                renderer.setClearColor(skyColors[5]);
+              //  renderer.setClearColor(skyColors[5]);
                 cube.material.color.setHex(skyColors[5]);
                 sunLight.color.setHex(sunColors[0]);
                 sunMaterial.emissive.set(sunColors[0]);
             }
             else if (240 <= sunLight.position.y && sunLight.position.y < 300) {
-                renderer.setClearColor(skyColors[4]);
+              //  renderer.setClearColor(skyColors[4]);
                 cube.material.color.setHex(skyColors[4]);
                 sunLight.color.setHex(sunColors[1]);
                 sunMaterial.emissive.set(sunColors[1]);
@@ -347,7 +352,7 @@
                 sunMaterial.emissive.set(sunColors[2]);
             }
             else if (120 <= sunLight.position.y && sunLight.position.y < 180) {
-                renderer.setClearColor(skyColors[3]);
+              //  renderer.setClearColor(skyColors[3]);
                 cube.material.color.setHex(skyColors[3]);
                 sunLight.color.setHex(sunColors[3]);
                 sunMaterial.emissive.set(sunColors[3]);
@@ -377,7 +382,7 @@
             )
             return distance; //Returns distance
         }
-    
+
 
         function makeTrees(x, y) {
             let testgeometry = new THREE.SphereGeometry(25, 32, 32);
@@ -499,7 +504,25 @@
         makeBody();
         scene.add(group);
 
+        
+
         function animate() {
+           
+          //  console.log(camera.position);
+            const time = performance.now();
+            const delta = (time - prevTime) / 1000;
+
+            move += delta;
+            if (move > 2) {
+                rotateAboutWorldAxis();
+                move = 0;
+            }
+
+
+            change += .05;
+            sinwave = Math.sin(change);
+
+
             let ray = new THREE.Raycaster();
             var rayPos = new THREE.Vector3();
             rayPos.set(camera.position.x, camera.position.y, camera.position.z);
@@ -507,8 +530,15 @@
             ray.set(rayPos, rayDir);
             let intersect = ray.intersectObject(terrain);
 
+
             if (intersect.length != 0) {
-                camera.position.y = intersect[0].point.y + 20;
+                if (moving == true) {
+                    displacement = sinwave * .1;
+                    camera.position.y = (intersect[0].point.y + 20) + displacement * camera.position.y;
+                }
+                else {
+                    camera.position.y = (intersect[0].point.y + 20)
+                }
             }
             else {
                 camera.position.y = 50;
@@ -516,14 +546,6 @@
 
             requestAnimationFrame(animate);
 
-            const time = performance.now();
-
-            const delta = (time - prevTime) / 1000;
-                move += delta; 
-                if (move > 10){
-                    rotateAboutWorldAxis();
-                    move = 0;
-                }
 
             if (controls.isLocked === true) {
                 for (let i = 0; i < trees.length; i++) {
@@ -534,9 +556,6 @@
                         trees[i].material.emissive.setHex(0x000000);
                     }
                 }
-
-                
-
 
                 let yPos = camera.position.y - 5;
                 group.position.y = (yPos);
@@ -557,7 +576,7 @@
 
         function render() {
 
-  
+
             const intersections = raycaster.intersectObjects(worldItems, false);
             intersection = (intersections.length) > 0 ? intersections[0] : null;
 
@@ -602,10 +621,10 @@
             }
         }
 
-        
 
 
-      
+
+
         function onDocumentKeyDown(e) {
             movement = 0;
             var keyCode = e.which || e.keyCode;
@@ -613,11 +632,16 @@
             else if (keyCode == 65) movement = "left";
             else if (keyCode == 68) movement = "right";
             else if (keyCode == 83) movement = "backward";
-            if (movement != 0) moveAround();
+        
+            if (movement != 0) {
+                moveAround();
+            }
         }
 
-        
+
+
         function moveAround() {
+            moving = true;
             oldCamera = camera.clone();
             if (movement == "forward") camera.translateZ(-speed);
             if (movement == "left") camera.translateX(-speed);
@@ -632,16 +656,22 @@
                 if (movement == "backward") camera.translateZ(-speed);
                 if (movement == "right") camera.translateX(-speed);
             }
-            else if (camera.position.x < -380 || camera.position.x > 380 || camera.position.z < -380 || camera.position.z > 380) {
-                if (movement == "forward") camera.translateZ(speed);
-                if (movement == "left") camera.translateX(speed);
-                if (movement == "backward") camera.translateZ(-speed);
-                if (movement == "right") camera.translateX(-speed);
-            }
+            // else if (camera.position.x < -550 || camera.position.x > 550 || camera.position.z < -550 || camera.position.z > 550) {
+            //     if (movement == "forward") camera.translateZ(speed);
+            //     if (movement == "left") camera.translateX(speed);
+            //     if (movement == "backward") camera.translateZ(-speed);
+            //     if (movement == "right") camera.translateX(-speed);
+            // }
         };
 
 
+
+
         document.addEventListener('keydown', onDocumentKeyDown, false);
+
+        document.addEventListener('keyup', (event) => {
+            moving = false;
+        });
 
         animate();
         render();
