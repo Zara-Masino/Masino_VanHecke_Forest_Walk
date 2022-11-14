@@ -1,61 +1,54 @@
 <html>
 
 <head>
-    <title>Three.js Geometries Example</title>
+    <title>main</title>
 </head>
 
 <body>
-
     <canvas id="myCanvas" width="800" height="800"></canvas>
-
     <script type="module">
         import * as THREE from "http://cs.merrimack.edu/~stuetzlec/three.js-master/build/three.module.js";
-        import { PointerLockControls } from 'http://cs.merrimack.edu/~stuetzlec/three.js-master/examples/jsm/controls/PointerLockControls.js';
 
-        let moving = false;
+        import { PointerLockControls } from 'http://cs.merrimack.edu/~stuetzlec/three.js-master/examples/jsm/controls/PointerLockControls.js';
         var scene = new THREE.Scene();
         let raycaster = new THREE.Raycaster();
-        let quaternion = new THREE.Quaternion();
-        let axis = new THREE.Vector3(0, 0, 1);
-        let move = 0;
+
+        let trees = [];
+        let collision = [];
         let change = 0;
         let sinwave = 0;
         let displacement = 0;
+        let moving = false;
 
 
-        let group = new THREE.Group();
 
-        var movement;
-        var oldCamera;
-        let speed = 2;
-        let collisionRayCaster = new THREE.Raycaster();
-        let trees = [];
-        let collision = [];
         const spheres = [];
         const spheresIndex = 0;
         let worldItems = [];
-
         let intersection = null;
         let toggle = 0;
         let clock = new THREE.Clock();
+        let turnSpeed = .1;
+
 
         let prevTime = performance.now();
+
 
         let sunColors = [0xf7e2ba, 0xffdaa8, 0xf8cb7c, 0xfdb25b, 0xfa9e4d];
         let moonColor = [0xdde2e5];
         let skyColors = [0x000608, 0x072f41, 0x094f6d, 0x436e91, 0x5e88b8, 0x7998bb];
-
         let windowWidth = window.innerWidth;
         let windowHeight = window.innerHeight;
-
+        let yheight;
 
         const loader = new THREE.TextureLoader();
 
-
-        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
         camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0));
         camera.position.set(0, 80, 10);
         scene.add(camera);
+
+        let previousTime = performance.now();
 
         var renderer = new THREE.WebGLRenderer({ canvas: myCanvas, antialias: true });
         renderer.setClearColor(0xADD8E6);
@@ -64,15 +57,14 @@
         // If you want the render to span the window, uncomment this
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
+        //        renderer.shadowMap.type = THREE.BasicShadowMap;
         renderer.shadowMapSoft = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
 
         var controls = new PointerLockControls(camera, document.body);
         document.addEventListener('click', function () {
             controls.lock();
         });
-
 
 
         const cursorGeom = new THREE.SphereGeometry(0.02, 16, 16);
@@ -81,38 +73,13 @@
         scene.add(cursor);
         spheres.push(cursor);
 
-
-
-        var cubeGeom = new THREE.BoxGeometry(1200, 1200, 1200);
-        var cubeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false, side: THREE.DoubleSide });
-
+        var world = new THREE.BoxGeometry(900, 900, 900);
+        var wmat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false, side: THREE.DoubleSide });
         /* Cause the material to be visible for inside and outside */
-        cubeMat.side = THREE.BackSide;
-
-        var cube = new THREE.Mesh(cubeGeom, cubeMat);
+        wmat.side = THREE.BackSide;
+        var cube = new THREE.Mesh(world, wmat);
         scene.add(cube);
         worldItems.push(cube);
-
-
-        var waterGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
-        var waterMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/water4.jpg') });
-        var water = new THREE.Mesh(waterGeom, waterMat);
-        water.rotation.x = -Math.PI / 2;
-        water.position.y = -15;
-        //water.receiveShadow = true;
-        scene.add(water);
-        worldItems.push(water);
-
-
-
-        var terrainGeom = new THREE.PlaneBufferGeometry(1200, 1200, 256, 256);
-        var terrainMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/sand3.jpg') });
-        var terrain = new THREE.Mesh(terrainGeom, terrainMat);
-        terrain.rotation.x = -Math.PI / 2;
-        scene.add(terrain);
-
-
-
 
 
         function makeLights(hexCode, x, y, z, intensity) {
@@ -130,27 +97,19 @@
             this.bulbLight.position.set(x, y, z); //Positions the bulblight 
             this.bulbLight.castShadow = true; //Casts shadow from the bulb light
             this.bulbLight.shadow.bias = - 0.0005; // reduces self-shadowing on double-sided objects
+            //  this.bulbLight.shadow.bias = - 0.0005; // reduces self-shadowing on double-sided objects
             this.bulbLight.shadow.radius = 8;
             this.bulbLight.shadow.mapSize.width = 2048; // You have there 4K no need to go over 2K
-
             this.bulbLight.shadow.mapSize.height = 2048; // 
-
-
-
             // this.bulbLight.shadow.mapSize.width = 2048;
             // this.bulbLight.shadow.mapSize.height = 2048;
             scene.add(this.bulbLight); //Adds bulb light to the scene
         }
 
-
-        let moon = new makeLights(moonColor[0], -420, -420, 0, .1);
-        let sun = new makeLights(sunColors[4], 420, 420, 0, 1);
+        let moon = new makeLights(moonColor[0], -255, -255, 0, .1);
+        let sun = new makeLights(sunColors[4], 255, 255, 0, 1);
         worldItems.push(sun.bulbLight);
         worldItems.push(moon.bulbLight);
-
-
-
-
 
 
         class Perlin {
@@ -163,13 +122,11 @@
                 for (var i = 0; i < 256; i++) {
                     this.p[i] = Math.floor(Math.random() * 256);
                 }
-
                 // To remove the need for index wrapping, double the permutation table length 
                 this.perm = [];
                 for (i = 0; i < 512; i++) {
                     this.perm[i] = this.p[i & 255];
                 }
-
                 // A lookup table to traverse the simplex around a given point in 4D. 
                 // Details can be found where this table is used, in the 4D noise method. 
                 this.simplex = [
@@ -182,11 +139,9 @@
                     [2, 0, 1, 3], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [3, 0, 1, 2], [3, 0, 2, 1], [0, 0, 0, 0], [3, 1, 2, 0],
                     [2, 1, 0, 3], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [3, 1, 0, 2], [0, 0, 0, 0], [3, 2, 0, 1], [3, 2, 1, 0]];
             }
-
             dot(g, x, y) {
                 return g[0] * x + g[1] * y;
             }
-
             noise(xin, yin) {
                 var n0, n1, n2; // Noise contributions from the three corners 
                 // Skew the input space to determine which simplex cell we're in 
@@ -244,18 +199,51 @@
         }
 
 
+        var waterGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
+        var waterMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/water4.jpg') });
+        var water = new THREE.Mesh(waterGeom, waterMat);
+        water.rotation.x = -Math.PI / 2;
+        water.position.y = -25;
+        //water.receiveShadow = true;
+        scene.add(water);
+        worldItems.push(water);
 
 
 
+        var terrainGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
+        var terrainMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/sand3.jpg') });
+        var terrain = new THREE.Mesh(terrainGeom, terrainMat);
+        terrain.rotation.x = -Math.PI / 2;
+        scene.add(terrain);
 
 
-        var peak = 30;
+        var peak = 60;
         var vertices = terrain.geometry.attributes.position.array;
         for (var i = 0; i <= vertices.length; i += 3) {
             vertices[i + 2] = peak * Math.random();
         }
         terrain.geometry.attributes.position.needsUpdate = true;
         terrain.geometry.computeVertexNormals();
+
+
+        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
+        let terrainShadowMat = new THREE.ShadowMaterial();
+        terrainShadowMat.opacity = 0.5;
+        var terrainShadow = new THREE.Mesh(terrainGeom, terrainShadowMat);
+        terrainShadow.receiveShadow = true;
+        terrainShadow.position.copy(terrain.position);
+        terrainShadow.rotation.copy(terrain.rotation);
+        scene.add(terrainShadow);
+
+
+        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
+        let waterShadowMat = new THREE.ShadowMaterial();
+        waterShadowMat.opacity = 0.5;
+        var waterShadow = new THREE.Mesh(waterGeom, waterShadowMat);
+        waterShadow.receiveShadow = true;
+        waterShadow.position.copy(water.position);
+        waterShadow.rotation.copy(water.rotation);
+        scene.add(waterShadow);
 
 
         var perlin = new Perlin();
@@ -272,260 +260,239 @@
         terrain.geometry.computeVertexNormals();
 
 
-        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
-        let shadowTerrainMat = new THREE.ShadowMaterial();
-        shadowTerrainMat.opacity = 0.5;
-        var shadowTerrain = new THREE.Mesh(terrainGeom, shadowTerrainMat);
-        shadowTerrain.receiveShadow = true;
-        shadowTerrain.position.copy(terrain.position);
-        shadowTerrain.rotation.copy(terrain.rotation);
-        scene.add(shadowTerrain);
-
-
-        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
-        let shadowWaterMat = new THREE.ShadowMaterial();
-        shadowWaterMat.opacity = 0.5;
-        var shadowWater = new THREE.Mesh(waterGeom, shadowWaterMat);
-        shadowWater.receiveShadow = true;
-        shadowWater.position.copy(water.position);
-        shadowWater.rotation.copy(water.rotation);
-        scene.add(shadowWater);
-
-
-
         terrain.castShadow = true;
+        // plane.receiveShadow = true;
         worldItems.push(terrain);
 
-        function rotateAboutWorldAxis() {
-            //console.log(sun.bulbLight.position);
-            quaternion.setFromAxisAngle(axis, THREE.Math.degToRad(15));
-            sun.bulbLight.position.applyQuaternion(quaternion);
-            moon.bulbLight.position.applyQuaternion(quaternion);
+
+
+
+        function rotateAboutWorldAxis(object, axis, angle) {
+            var rotationMatrix = new THREE.Matrix4();
+            rotationMatrix.makeRotationAxis(axis.normalize(), angle);
+            var currentPos = new THREE.Vector4(object.position.x, object.position.y, object.position.z, 1);
+            var newPos = currentPos.applyMatrix4(rotationMatrix);
+            object.position.x = newPos.x;
+            object.position.y = newPos.y;
+            object.position.z = newPos.z;
         }
 
-
-
-            function checkPositions(sun, moon) {
-                let moonLight = moon.bulbLight;
-                let sunLight = sun.bulbLight;
-
-                let sunMaterial = sun.bulbMat;
-                if (moonLight.position.y > 475) {
-                    cube.material.color.setHex(skyColors[0]);
-                    moonLight.intensity = .8;
-                }
-                else if (357 <= moonLight.position.y && moonLight.position.y < 475) {
-                    cube.material.color.setHex(skyColors[1]);
-                    moonLight.intensity = .7;
-                }
-                else if (239 <= moonLight.position.y && moonLight.position.y < 357) {
-                    moonLight.intensity = .6;
-                }
-                else if (121 <= moonLight.position.y && moonLight.position.y < 239) {
-                    cube.material.color.setHex(skyColors[2]);
-                    moonLight.intensity = .5;
-                }
-                else if (moonLight.position.y < 121 && moonLight.position.y > -.5) {
-                    moonLight.intensity = .4;
-                }
-                else if (moonLight.position.y < -.5) {
-                    moonLight.intensity = 0;
-                }
-
-                if (sunLight.position.y > 475) {
-                    cube.material.color.setHex(skyColors[5]);
-                    sunLight.color.setHex(sunColors[0]);
-                    sunMaterial.emissive.set(sunColors[0]);
-                }
-                else if (357 <= sunLight.position.y && sunLight.position.y < 475) {
-                    cube.material.color.setHex(skyColors[4]);
-                    sunLight.color.setHex(sunColors[1]);
-                    sunMaterial.emissive.set(sunColors[1]);
-                }
-                else if (239 <= sunLight.position.y && sunLight.position.y < 357) {
-                    sunLight.color.setHex(sunColors[2]);
-                    sunMaterial.emissive.set(sunColors[2]);
-                }
-                else if (121 <= sunLight.position.y && sunLight.position.y < 239) {
-                    cube.material.color.setHex(skyColors[3]);
-                    sunLight.color.setHex(sunColors[3]);
-                    sunMaterial.emissive.set(sunColors[3]);
-                }
-                else if (sunLight.position.y < 121 && sunLight.position.y > -.5) {
-                    sunLight.color.setHex(sunColors[4]);
-                    sunMaterial.emissive.set(sunColors[4]);
-                    sunLight.intensity = 1;
-                }
-                else if (sunLight.position.y < -.5) {
-                    sunLight.intensity = 0;
-                }
-
-
+        function checkPositions(sun, moon) {
+            let moonLight = moon.bulbLight;
+            let sunLight = sun.bulbLight;
+            let sunMaterial = sun.bulbMat;
+            if (moonLight.position.y > 300) {
+                renderer.setClearColor(skyColors[0]);
+                cube.material.color.setHex(skyColors[0]);
+                moonLight.intensity = .8;
             }
-
-            //https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
-            //The above link helped us with determining the equation we would use to calculate the distance between two
-            //points
-            //Calculates the distance between two points
-            function calcDistance(point, shape) {
-                //This calculates the distance of two points based on the distance formula
-                const distance = Math.sqrt(
-                    (point.x - shape.position.x) * (point.x - shape.position.x) +
-                    (point.y - shape.position.y) * (point.y - shape.position.y) +
-                    (point.z - shape.position.z) * (point.z - shape.position.z)
-                )
-                return distance; //Returns distance
+            else if (240 <= moonLight.position.y && moonLight.position.y < 300) {
+                renderer.setClearColor(skyColors[1]);
+                cube.material.color.setHex(skyColors[1]);
+                moonLight.intensity = .7;
             }
-
-
-            function makeTrees(x, y) {
-                let testgeometry = new THREE.SphereGeometry(25, 32, 32);
-                testgeometry.computeBoundingSphere(); //Compute a bounding sphere around each object
-                let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
-                let mesh = new THREE.Mesh(testgeometry, testMaterial);
-                mesh.position.set(x, y, 0);
-                worldItems.push(mesh);
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-
-                scene.add(mesh);
-                return mesh;
-
+            else if (180 <= moonLight.position.y && moonLight.position.y < 240) {
+                moonLight.intensity = .6;
             }
-            let x = .1;
-            let y = .1;
-            // for (let i = 0; i < 3; i++) {
-            //     let tree1 = new makeTrees(x, y);
-            //     x += 1;
-            //     y += 1;
-            //     trees.push(tree1);
-            // }
-
-            //,console.log(trees);
-            let test = new makeTrees(50, 10);
-            trees.push(test);
-
-            let test2 = new makeTrees(-50, 10);
-            trees.push(test2);
-
-            collision.push(test);
-            collision.push(test2);
-            collision.push(cube);
-
-
-
-
-            //Function which detects whether the camera has collided with an object and then provides
-            //some functionality to show that the collision was dealt with
-            function collisionDetection(point, shape) {
-                let distance = calcDistance(point, shape); //Calculates the distance between the camera's position
-                //and an object
-                if (distance < shape.geometry.boundingSphere.radius) { //If the distance or camera is within the objects
-                    //console.log("HELLER");
-                    return true;
-                }
-                else {
-                    return false;
-                }
+            else if (120 <= moonLight.position.y && moonLight.position.y < 180) {
+                renderer.setClearColor(skyColors[2]);
+                cube.material.color.setHex(skyColors[2]);
+                moonLight.intensity = .5;
             }
-
-            function makeBody() {
-
-                let wholeBodyMaterial = new THREE.MeshPhongMaterial({
-                    //color: 0x000000,
-                    //transparent: true,
-                    blending: THREE.AdditiveBlending,
-                    colorWrite: false,
-                    depthWrite: false
-
-                });
-
-                const headGeometry = new THREE.SphereGeometry(4, 32, 32);
-                const headMaterial = wholeBodyMaterial;
-                const head = new THREE.Mesh(headGeometry, wholeBodyMaterial);
-                head.castShadow = true;
-                head.receiveShadow = true;
-                group.add(head);
-                head.position.set(0, 2, 0);
-
-                let bodyGeometry = new THREE.BoxGeometry(3, 8, 3)
-                const bodyMaterial = wholeBodyMaterial;
-                let body = new THREE.Mesh(bodyGeometry, wholeBodyMaterial)
-                body.castShadow = true;
-                body.receiveShadow = true;
-                body.position.set(0, -4, 0);
-                group.add(body)
-
-
-                let leftArmGeometry = new THREE.BoxGeometry(1.2, 10, 1.2)
-                const leftArmMaterial = wholeBodyMaterial;
-                let leftArm = new THREE.Mesh(leftArmGeometry, wholeBodyMaterial)
-                leftArm.castShadow = true;
-                leftArm.receiveShadow = true;
-                leftArm.rotateZ(-Math.PI / 3);
-                leftArm.position.set(-3.3, -3.5, 0);
-                group.add(leftArm);
-
-                let rightArmGeometry = new THREE.BoxGeometry(1.2, 10, 1.2)
-                const rightArmMaterial = wholeBodyMaterial;
-                let rightArm = new THREE.Mesh(rightArmGeometry, wholeBodyMaterial)
-                rightArm.castShadow = true;
-                rightArm.receiveShadow = true;
-                rightArm.rotateZ(Math.PI / 3);
-                rightArm.position.set(3.3, -3.5, 0);
-                group.add(rightArm);
-
-
-                let rightLegGeometry = new THREE.BoxGeometry(2, 10, 2)
-                const rightLegMaterial = wholeBodyMaterial;
-                let rightLeg = new THREE.Mesh(rightLegGeometry, wholeBodyMaterial)
-                rightLeg.castShadow = true;
-                rightLeg.receiveShadow = true;
-                rightLeg.rotateZ(Math.PI / 6);
-                rightLeg.position.set(3.3, -12, 0);
-                group.add(rightLeg);
-
-                let leftLegGeometry = new THREE.BoxGeometry(2, 10, 2)
-                const leftLegMaterial = wholeBodyMaterial;
-                let leftLeg = new THREE.Mesh(leftLegGeometry, wholeBodyMaterial)
-                leftLeg.castShadow = true;
-                leftLeg.receiveShadow = true;
-                leftLeg.rotateZ(-Math.PI / 6);
-                leftLeg.position.set(-3.3, -12, 0);
-                group.add(leftLeg);
+            else if (moonLight.position.y < 120 && moonLight.position.y > -.5) {
+                moonLight.intensity = .4;
             }
+            else if (moonLight.position.y < -.5) {
+                moonLight.intensity = 0;
+            }
+            if (sunLight.position.y > 300) {
+                //  console.log(sunLight.position.y, 'sun position AT highest');
+                renderer.setClearColor(skyColors[5]);
+                cube.material.color.setHex(skyColors[5]);
+                sunLight.color.setHex(sunColors[0]);
+                sunMaterial.emissive.set(sunColors[0]);
+            }
+            else if (240 <= sunLight.position.y && sunLight.position.y < 300) {
+                //  console.log(sunLight.position.y, 'sun position AT MID');
+                renderer.setClearColor(skyColors[4]);
+                cube.material.color.setHex(skyColors[4]);
+                sunLight.color.setHex(sunColors[1]);
+                sunMaterial.emissive.set(sunColors[1]);
+            }
+            else if (180 <= sunLight.position.y && sunLight.position.y < 240) {
+                //  console.log(sunLight.position.y, 'sun position AT second MID');
+                sunLight.color.setHex(sunColors[2]);
+                sunMaterial.emissive.set(sunColors[2]);
+            }
+            else if (120 <= sunLight.position.y && sunLight.position.y < 180) {
+                // console.log(sunLight.position.y, 'sun position AT second to last lowest');
+                renderer.setClearColor(skyColors[3]);
+                cube.material.color.setHex(skyColors[3]);
+                sunLight.color.setHex(sunColors[3]);
+                sunMaterial.emissive.set(sunColors[3]);
+            }
+            else if (sunLight.position.y < 120 && sunLight.position.y > -.5) {
+                //console.log(sunLight.position.y, 'LAST');
+                sunLight.color.setHex(sunColors[4]);
+                sunMaterial.emissive.set(sunColors[4]);
+                sunLight.intensity = 1;
+            }
+            else if (sunLight.position.y < -.5) {
+                //console.log(sunLight.position.y, 'turn sun off');
+                sunLight.intensity = 0;
+            }
+        }
 
-            makeBody();
-            scene.add(group);
+        //https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
+        //The above link helped us with determining the equation we would use to calculate the distance between two
+        //points
+        //Calculates the distance between two points
+        function calcDistance(point, shape) {
+            //This calculates the distance of two points based on the distance formula
+            const distance = Math.sqrt(
+                (point.x - shape.position.x) * (point.x - shape.position.x) +
+                (point.y - shape.position.y) * (point.y - shape.position.y) +
+                (point.z - shape.position.z) * (point.z - shape.position.z)
+            )
+            return distance; //Returns distance
+        }
+
+      
+        function makeTrees(x, y) {
+            let testgeometry = new THREE.SphereGeometry(25, 32, 32);
+            testgeometry.computeBoundingSphere(); //Compute a bounding sphere around each object
+            let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+            let mesh = new THREE.Mesh(testgeometry, testMaterial);
+            mesh.position.set(x, y, 0);
+            worldItems.push(mesh);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            return mesh;
+        }
+        let x = .1;
+        let y = .1;
+        // for (let i = 0; i < 3; i++) {
+        //     let tree1 = new makeTrees(x, y);
+        //     x += 1;
+        //     y += 1;
+        //     trees.push(tree1);
+        // }
+        //,console.log(trees);
+        let test = new makeTrees(50, 10);
+        trees.push(test);
+        let test2 = new makeTrees(-50, 10);
+        trees.push(test2);
+        collision.push(test);
+        collision.push(test2);
+        collision.push(cube);
+
+        //Function which detects whether the camera has collided with an object and then provides
+        //some functionality to show that the collision was dealt with
+        function collisionDetection(point, shape) {
+            let distance = calcDistance(point, shape); //Calculates the distance between the camera's position
+            //and an object
+            if (distance < shape.geometry.boundingSphere.radius) { //If the distance or camera is within the objects
+                console.log("HELLER");
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        let group = new THREE.Group();
 
 
 
-            function animate() {
+        function makeBody() {
 
-                //  console.log(camera.position);
-                const time = performance.now();
-                const delta = (time - prevTime) / 1000;
+            let wholeBodyMaterial = new THREE.MeshPhongMaterial({
+                //color: 0x000000,
+                //transparent: true,
+                // blending: THREE.AdditiveBlending,
+                colorWrite: false,
+                depthWrite: false
 
-                move += delta;
-                if (move > 10) {
-                    rotateAboutWorldAxis();
-                    move = 0;
-                }
+            });
+
+            const headGeometry = new THREE.SphereGeometry(4, 32, 32);
+            const headMaterial = wholeBodyMaterial;
+            const head = new THREE.Mesh(headGeometry, wholeBodyMaterial);
+            head.castShadow = true;
+            head.receiveShadow = true;
+            group.add(head);
+            head.position.set(0, 2, 0);
+
+            let bodyGeometry = new THREE.BoxGeometry(3, 8, 3)
+            const bodyMaterial = wholeBodyMaterial;
+            let body = new THREE.Mesh(bodyGeometry, wholeBodyMaterial)
+            body.castShadow = true;
+            body.receiveShadow = true;
+            body.position.set(0, -4, 0);
+            group.add(body)
 
 
-                change += .05;
-                sinwave = Math.sin(change);
+            let leftArmGeometry = new THREE.BoxGeometry(1.2, 10, 1.2)
+            const leftArmMaterial = wholeBodyMaterial;
+            let leftArm = new THREE.Mesh(leftArmGeometry, wholeBodyMaterial)
+            leftArm.castShadow = true;
+            leftArm.receiveShadow = true;
+            leftArm.rotateZ(-Math.PI / 3);
+            leftArm.position.set(-3.3, -3.5, 0);
+            group.add(leftArm);
+
+            let rightArmGeometry = new THREE.BoxGeometry(1.2, 10, 1.2)
+            const rightArmMaterial = wholeBodyMaterial;
+            let rightArm = new THREE.Mesh(rightArmGeometry, wholeBodyMaterial)
+            rightArm.castShadow = true;
+            rightArm.receiveShadow = true;
+            rightArm.rotateZ(Math.PI / 3);
 
 
-                let ray = new THREE.Raycaster();
-                var rayPos = new THREE.Vector3();
-                rayPos.set(camera.position.x, camera.position.y, camera.position.z);
-                var rayDir = new THREE.Vector3(0, -1, 0);
-                ray.set(rayPos, rayDir);
-                let intersect = ray.intersectObject(terrain);
+            rightArm.position.set(3.3, -3.5, 0);
+            group.add(rightArm);
 
 
-                if (intersect.length != 0) {
+            let rightLegGeometry = new THREE.BoxGeometry(2, 10, 2)
+            const rightLegMaterial = wholeBodyMaterial;
+            let rightLeg = new THREE.Mesh(rightLegGeometry, wholeBodyMaterial)
+            rightLeg.castShadow = true;
+            rightLeg.receiveShadow = true;
+            rightLeg.rotateZ(Math.PI / 6);
+            rightLeg.position.set(3.3, -12, 0);
+            group.add(rightLeg);
+
+            let leftLegGeometry = new THREE.BoxGeometry(2, 10, 2)
+            const leftLegMaterial = wholeBodyMaterial;
+            let leftLeg = new THREE.Mesh(leftLegGeometry, wholeBodyMaterial)
+            leftLeg.castShadow = true;
+            leftLeg.receiveShadow = true;
+            leftLeg.rotateZ(-Math.PI / 6);
+
+
+            leftLeg.position.set(-3.3, -12, 0);
+            group.add(leftLeg);
+            console.log(group.children[0].lookAt, 'GROUP LOOK AT');
+        }
+
+        makeBody();
+
+        scene.add(group);
+
+        function animate() {
+            let ray = new THREE.Raycaster();
+            var rayPos = new THREE.Vector3();
+
+            change += .2;
+            sinwave = Math.sin(change);
+
+
+            rayPos.set(camera.position.x, camera.position.y, camera.position.z);
+            var rayDir = new THREE.Vector3(0, -1, 0);
+            ray.set(rayPos, rayDir);
+            let intersect = ray.intersectObject(terrain);
+
+            if (intersect.length != 0) {
                     if (moving == true) {
                         displacement = sinwave * .1;
                         camera.position.y = (intersect[0].point.y + 20) + displacement * camera.position.y;
@@ -538,137 +505,123 @@
                     camera.position.y = 50;
                 }
 
-                requestAnimationFrame(animate);
-
-
-                if (controls.isLocked === true) {
-                    for (let i = 0; i < trees.length; i++) {
-                        if (collisionDetection(cursor.position, trees[i]) == true) {
-                            trees[i].material.emissive.setHex(0xff0000);
-                        }
-                        else {
-                            trees[i].material.emissive.setHex(0x000000);
-                        }
+            requestAnimationFrame(animate);
+            const time = performance.now();
+            if (controls.isLocked === true) {
+                for (let i = 0; i < trees.length; i++) {
+                    if (collisionDetection(cursor.position, trees[i]) == true) {
+                        trees[i].material.emissive.setHex(0xff0000);
                     }
-
-                    let yPos = camera.position.y - 5;
-                    group.position.y = (yPos);
-                    group.position.z = (camera.position.z);
-                    group.position.x = (camera.position.x);
-                    group.setRotationFromMatrix(camera.matrix);
-
-
+                    else {
+                        trees[i].material.emissive.setHex(0x000000);
+                    }
                 }
+                const delta = (time - prevTime) / 1000;
 
-                prevTime = time;
+                let yPos = camera.position.y - 5;
+                group.position.y = (yPos);
+                group.position.z = (camera.position.z);
+                group.position.x = (camera.position.x);
 
-                renderer.render(scene, camera);
+                group.setRotationFromMatrix(camera.matrix);
+
 
             }
 
 
-
-            function render() {
-
-
-                const intersections = raycaster.intersectObjects(worldItems, false);
-                intersection = (intersections.length) > 0 ? intersections[0] : null;
-
-                if (toggle > 0.001 && intersection !== null) {
-                    spheres[spheresIndex].position.copy(intersection.point);
-                    toggle = 0;
-
-                }
-
-                raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
-                let distance = calcDistance(camera.position, cursor);
-                if (distance != null) {
-                    cursor.scale.set(distance * .5, distance * .5, distance * .5);
-                }
+            prevTime = time;
+            renderer.render(scene, camera);
+        }
 
 
-                toggle += clock.getDelta();
-
-                updateSize();
-                requestAnimationFrame(render);
+        function render() {
 
 
-
-                // We need to translate the object back to the origin before rotating it:
-                //rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
-                //rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
-                checkPositions(sun, moon);
-
-                renderer.render(scene, camera);
+            const intersections = raycaster.intersectObjects(worldItems, false);
+            intersection = (intersections.length) > 0 ? intersections[0] : null;
+            if (toggle > 0.001 && intersection !== null) {
+                spheres[spheresIndex].position.copy(intersection.point);
+                toggle = 0;
             }
+            raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
 
+            let distance = calcDistance(camera.position, cursor);
+            if (distance != null) {
 
-            //source: https://threejs.org/examples/webgl_multiple_views.html
-            //This function updates the window width and height variables to the actual width and height of the computer
-            //regardless of whether the console has been opened or not
-            function updateSize() {
-                if (windowWidth != window.innerWidth || windowHeight != window.innerHeight) { //If the window width or height has
-                    //actually been changed than this if statement is triggered
-                    windowWidth = window.innerWidth;
-                    windowHeight = window.innerHeight;
-                    renderer.setSize(windowWidth, windowHeight);
-                }
+                cursor.scale.set(distance * .5, distance * .5, distance * .5);
             }
-
-
-
-
-
-            function onDocumentKeyDown(e) {
-                movement = 0;
-                var keyCode = e.which || e.keyCode;
-                if (keyCode == 87) movement = "forward";
-                else if (keyCode == 65) movement = "left";
-                else if (keyCode == 68) movement = "right";
-                else if (keyCode == 83) movement = "backward";
-
-                if (movement != 0) {
-                    moveAround();
-                }
+            toggle += clock.getDelta();
+            updateSize();
+            requestAnimationFrame(render);
+            const time = performance.now();
+            const delta = time - previousTime;
+            // We need to translate the object back to the origin before rotating it:
+            rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
+            rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
+            checkPositions(sun, moon);
+            previousTime = time;
+            renderer.render(scene, camera);
+        }
+        //source: https://threejs.org/examples/webgl_multiple_views.html
+        //This function updates the window width and height variables to the actual width and height of the computer
+        //regardless of whether the console has been opened or not
+        function updateSize() {
+            if (windowWidth != window.innerWidth || windowHeight != window.innerHeight) { //If the window width or height has
+                //actually been changed than this if statement is triggered
+                windowWidth = window.innerWidth;
+                windowHeight = window.innerHeight;
+                renderer.setSize(windowWidth, windowHeight);
             }
+        }
+        let collisionRayCaster = new THREE.Raycaster();
 
+        var movement;
+        function onDocumentKeyDown(e) {
 
+            movement = 0;
+            var keyCode = e.which || e.keyCode;
+            if (keyCode == 87) movement = "forward";
+            else if (keyCode == 65) movement = "left";
+            else if (keyCode == 68) movement = "right";
+            else if (keyCode == 83) movement = "backward";
+            if (movement != 0) moveAround();
+        }
 
-            function moveAround() {
-                moving = true;
-                oldCamera = camera.clone();
-                if (movement == "forward") camera.translateZ(-speed);
-                if (movement == "left") camera.translateX(-speed);
-                if (movement == "backward") camera.translateZ(speed);
-                if (movement == "right") camera.translateX(speed);
-                collisionRayCaster.set(camera.position, oldCamera.position.normalize());
+        var oldCamera;
+        let speed = 2;
 
+        function moveAround() {
+            moving = true;
+            oldCamera = camera.clone();
+            if (movement == "forward") camera.translateZ(-speed);
+            if (movement == "left") camera.translateX(-speed);
+            if (movement == "backward") camera.translateZ(speed);
+            if (movement == "right") camera.translateX(speed);
+            collisionRayCaster.set(camera.position, oldCamera.position.normalize());
 
-                if (collisionRayCaster.intersectObjects(trees).length > 0) {
-                    if (movement == "forward") camera.translateZ(speed);
-                    if (movement == "left") camera.translateX(speed);
-                    if (movement == "backward") camera.translateZ(-speed);
-                    if (movement == "right") camera.translateX(-speed);
-                }
-                else if (camera.position.x < -550 || camera.position.x > 550 || camera.position.z < -550 || camera.position.z > 550) {
-                    if (movement == "forward") camera.translateZ(speed);
-                    if (movement == "left") camera.translateX(speed);
-                    if (movement == "backward") camera.translateZ(-speed);
-                    if (movement == "right") camera.translateX(-speed);
-                }
-            };
+            if (collisionRayCaster.intersectObjects(trees).length > 0) {
+                console.log("does it get in");
 
+                if (movement == "forward") camera.translateZ(speed);
+                if (movement == "left") camera.translateX(speed);
+                if (movement == "backward") camera.translateZ(-speed);
+                if (movement == "right") camera.translateX(-speed);
+            }
+            else if (camera.position.x < -380 || camera.position.x > 380 || camera.position.z < -380 || camera.position.z > 380) {
+                if (movement == "forward") camera.translateZ(speed);
+                if (movement == "left") camera.translateX(speed);
+                if (movement == "backward") camera.translateZ(-speed);
+                if (movement == "right") camera.translateX(-speed);
+            }
+        };
+        document.addEventListener('keydown', onDocumentKeyDown, false);
 
-
-
-            document.addEventListener('keydown', onDocumentKeyDown, false);
-
-            document.addEventListener('keyup', (event) => {
+        document.addEventListener('keyup', (event) => {
                 moving = false;
             });
 
-            animate();
-            render();
+        animate();
+        render();
     </script>
 </body>
 
