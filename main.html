@@ -23,7 +23,7 @@
 
 
 
-
+        let treePositions = [];
         var scene = new THREE.Scene();
         let raycaster = new THREE.Raycaster();
 
@@ -34,7 +34,7 @@
         let displacement = 0;
         let moving = false;
 
-      
+
         const spheres = [];
         const spheresIndex = 0;
         let worldItems = [];
@@ -195,6 +195,20 @@
 
 
 
+        //This function randomly returns a true or false value or a number between 0 and 10 in order to help randomize certain customizations
+        function random() {
+            let randomNumber = Math.round(Math.random() * 10); //Creates a random number between 0 and 10
+            if (randomNumber % 2 == 0) { //If the random number is even
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+
+
+
         function TreeBuilder(string, params) {
             this.string = string;
             this.params = params;
@@ -214,7 +228,7 @@
                 //init object
                 var tree = new THREE.Object3D();
                 //var textureLoader = new THREE.TextureLoader();
-                var branchMaterial = new THREE.MeshBasicMaterial({ color: 0xf83782 });
+                var branchMaterial = new THREE.MeshBasicMaterial({ color: 0x964B00 });
                 var appleMaterial = new THREE.MeshBasicMaterial({ color: 0xf83782 });
                 // var branchMaterial = new THREE.MeshBasicMaterial({ color: 'brown', map: textureLoader.load("textures/branch.jpg") });
                 // var appleMaterial = new THREE.MeshBasicMaterial({ color: 'red', map: textureLoader.load("textures/apple.jpg") });
@@ -405,13 +419,15 @@
 
 
         //let rules = "F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F";
-        let rules = parseRules( "F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F");
-        let params = new Params("F", 5, 25, 3, 0.3);
+        let rules = parseRules("F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F");
+        let params = new Params("F", 5, 25, 4, 0.6);
+        // old params: "F", 5, 25, 3, 0.3
         var rewriter = new Rewriter(rules);
         var string = rewriter.rewrite(params);
         //console.log(string)
         let newTree = new TreeBuilder(string, params).build();
         let secondHalf = new TreeBuilder(string, params).build();
+
         console.log(secondHalf.rotation);
         secondHalf.rotation.y = 90;
         scene.add(secondHalf);
@@ -541,35 +557,93 @@
             return distance; //Returns distance
         }
 
+        function randomizePositions() {
+            let position = new THREE.Vector3(0, 0, 0);
+            let rayHeight = new THREE.Raycaster();
+            var treePos = new THREE.Vector3();
 
-        function makeTrees(x, y) {
-            let testgeometry = new THREE.SphereGeometry(25, 32, 32);
-            testgeometry.computeBoundingSphere(); //Compute a bounding sphere around each object
-            let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
-            let mesh = new THREE.Mesh(testgeometry, testMaterial);
-            mesh.position.set(x, y, 0);
-            worldItems.push(mesh);
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            scene.add(mesh);
-            return mesh;
+
+            let xPos = Math.random() * 380;
+            let yPos = 70;
+            let zPos = Math.random() * 380;
+            if (random() == true) {
+                xPos *= -1;
+            }
+            if (random() == true) {
+                zPos *= -1;
+            }
+
+
+            let rayDirection = new THREE.Vector3(0, -1, 0);
+            rayHeight.set(treePos, rayDirection.normalize());
+            let intersectHeight = rayHeight.intersectObject(terrain);
+
+            scene.updateMatrixWorld();
+
+            // heightRay.set(rayPosition, rayDirection);
+            //let intersectHeight = heightRay.intersectObject(terrain);
+
+            console.log(intersectHeight, 'intersect height IS');
+
+
+            if (intersectHeight.length != 0) {
+                yPos = intersectHeight[0].point.y;
+            }
+
+            treePos.set(xPos, yPos, zPos);
+
+            position.z = zPos;
+            position.x = xPos;
+            position.y = yPos;
+            return position;
+
         }
-        let x = .1;
-        let y = .1;
-        // for (let i = 0; i < 3; i++) {
-        //     let tree1 = new makeTrees(x, y);
-        //     x += 1;
-        //     y += 1;
-        //     trees.push(tree1);
-        // }
-        //,console.log(trees);
-        let test = new makeTrees(50, 10);
-        trees.push(test);
-        let test2 = new makeTrees(-50, 10);
-        trees.push(test2);
-        collision.push(test);
-        collision.push(test2);
-        collision.push(cube);
+
+
+        function makeTrees() {
+            // let testgeometry = new THREE.SphereGeometry(25, 32, 32);
+            // testgeometry.computeBoundingSphere(); //Compute a bounding sphere around each object
+            // let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+            // let mesh = new THREE.Mesh(testgeometry, testMaterial);
+
+
+            // newTree.children[0].computeBoundingSphere();
+            //let secondHalf = new TreeBuilder(string, params).build();
+            //secondHalf.rotation.y = 90;
+            //scene.add(secondHalf);
+            //worldItems.push(secondHalf);
+            // trees.push(secondHalf);
+
+            for (let i = 0; i < 5; i++) {
+                let positionTree = randomizePositions();
+                let newTree = new TreeBuilder(string, params).build();
+
+                console.log(newTree, 'new tree');
+
+
+                newTree.position.set(positionTree.x, positionTree.y, positionTree.z);
+                newTree.castShadow = true;
+                newTree.receiveShadow = true;
+                //trees.push(newTree); //ADDING NEW TREE TO TREES ARRAY CAUSES ERROR BECAUSE THERE IS NO BOUNDING SPHERE FOR THE TREE
+                //AND BECAUSE YOU CANT SET THE EMISSIVE OF THE TREE FOR HIGHLIGHTING IN SUCH A WAY!!
+                worldItems.push(newTree);
+
+                scene.add(newTree);
+
+            }
+
+
+        }
+
+        makeTrees();
+        //console.log(trees);
+        // let test = new makeTrees(50, 10);
+        // trees.push(test);
+        // let test2 = new makeTrees(-50, 10);
+        // trees.push(test2);
+        // collision.push(test);
+        // collision.push(test2);
+        // collision.push(cube);
 
         //Function which detects whether the camera has collided with an object and then provides
         //some functionality to show that the collision was dealt with
@@ -664,12 +738,13 @@
         scene.add(group);
 
         function animate() {
-            let ray = new THREE.Raycaster();
-            var rayPos = new THREE.Vector3();
 
             change += .2;
             sinwave = Math.sin(change);
 
+
+            let ray = new THREE.Raycaster();
+            var rayPos = new THREE.Vector3();
 
             rayPos.set(camera.position.x, camera.position.y, camera.position.z);
             var rayDir = new THREE.Vector3(0, -1, 0);
