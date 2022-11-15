@@ -228,8 +228,8 @@
                 //init object
                 var tree = new THREE.Object3D();
                 //var textureLoader = new THREE.TextureLoader();
-                var branchMaterial = new THREE.MeshBasicMaterial({ color: 0x964B00 });
-                var appleMaterial = new THREE.MeshBasicMaterial({ color: 0xf83782 });
+                var branchMaterial = new THREE.MeshPhongMaterial({ color: 0x964B00 });
+                var appleMaterial = new THREE.MeshPhongMaterial({ color: 0xf83782 });
                 // var branchMaterial = new THREE.MeshBasicMaterial({ color: 'brown', map: textureLoader.load("textures/branch.jpg") });
                 // var appleMaterial = new THREE.MeshBasicMaterial({ color: 'red', map: textureLoader.load("textures/apple.jpg") });
 
@@ -419,26 +419,29 @@
 
 
         //let rules = "F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F";
-        let rules = parseRules("F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F");
-        let params = new Params("F", 5, 25, 4, 0.6);
+
         // old params: "F", 5, 25, 3, 0.3
-        var rewriter = new Rewriter(rules);
-        var string = rewriter.rewrite(params);
-        //console.log(string)
-        let newTree = new TreeBuilder(string, params).build();
-        let secondHalf = new TreeBuilder(string, params).build();
-
-        console.log(secondHalf.rotation);
-        secondHalf.rotation.y = 90;
-        scene.add(secondHalf);
 
 
-        //axiom, iterations, delta, branchLength, branchRadius, branchReduction, branchMinRadius
+        // let rules = parseRules("F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F");
+        // let params = new Params("F", 5, 25, 4, 0.6);
+        // var rewriter = new Rewriter(rules);
+        // var string = rewriter.rewrite(params);
+        // //console.log(string)
+        // let newTree = new TreeBuilder(string, params).build();
+        // let secondHalf = new TreeBuilder(string, params).build();
+
+        // console.log(secondHalf.rotation);
+        // secondHalf.rotation.y = 90;
+        // scene.add(secondHalf);
+
+
+
         //let params = new Params("F", 5, 25, 3, 0.3);
         //let string = "F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F";
         //let newTree = new TreeBuilder(string, params).build();
-        scene.add(newTree);
-        console.log(newTree);
+        // scene.add(newTree);
+        // console.log(newTree);
 
 
 
@@ -601,6 +604,19 @@
 
 
         function makeTrees() {
+            //axiom, iterations, delta, branchLength, branchRadius, branchReduction, branchMinRadius
+            //let rules = parseRules("F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F");
+            //let params = new Params("F", 4, 25, 4, 0.6);
+             let params = new Params("F", 3, 22.5);
+             //"F=F>[<+F]F[-F&]<F\nF=F&[+F^&^]F\nF=F[-F&]F&"
+             let rules = parseRules("F=F>[<+F]F[-F&]<F\nF=F&[+F^&^]F\nF=F[-F&]F&");
+             //let rules = parseRules("X=F-[[X]+X]+F[+FX]-X\nF=FF");
+            //let params = new Params("A", 2, 22.5);
+            //let rules = parseRules("A=F[++A]XF^^-[--A]^^^A");
+            var rewriter = new Rewriter(rules);
+            var string = rewriter.rewrite(params);
+
+
             // let testgeometry = new THREE.SphereGeometry(25, 32, 32);
             // testgeometry.computeBoundingSphere(); //Compute a bounding sphere around each object
             // let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
@@ -614,28 +630,31 @@
             //worldItems.push(secondHalf);
             // trees.push(secondHalf);
 
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 30; i++) {
                 let positionTree = randomizePositions();
                 let newTree = new TreeBuilder(string, params).build();
-
-                console.log(newTree, 'new tree');
-
-
+                // console.log(newTree.children[0].geometry);
+                // newTree.children[0].material.emissive.setHex(0xff0000);
+                // for(let j = 0; j < newTree.children.length/2; j++){
+                //     newTree.children[j].material.emissive.setHex(0xff0000);
+                // }
+                //console.log(newTree, 'new tree');
                 newTree.position.set(positionTree.x, positionTree.y, positionTree.z);
                 newTree.castShadow = true;
                 newTree.receiveShadow = true;
                 //trees.push(newTree); //ADDING NEW TREE TO TREES ARRAY CAUSES ERROR BECAUSE THERE IS NO BOUNDING SPHERE FOR THE TREE
                 //AND BECAUSE YOU CANT SET THE EMISSIVE OF THE TREE FOR HIGHLIGHTING IN SUCH A WAY!!
                 worldItems.push(newTree);
-
+                trees.push(newTree);
                 scene.add(newTree);
-
             }
 
 
         }
 
         makeTrees();
+        console.log("final trees ", trees);
+        //console.log(worldItems);
         //console.log(trees);
         // let test = new makeTrees(50, 10);
         // trees.push(test);
@@ -647,17 +666,17 @@
 
         //Function which detects whether the camera has collided with an object and then provides
         //some functionality to show that the collision was dealt with
-        function collisionDetection(point, shape) {
-            let distance = calcDistance(point, shape); //Calculates the distance between the camera's position
-            //and an object
-            if (distance < shape.geometry.boundingSphere.radius) { //If the distance or camera is within the objects
-                console.log("HELLER");
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
+        // function collisionDetection(point, shape) {
+        //     let distance = calcDistance(point, shape); //Calculates the distance between the camera's position
+        //     //and an object
+        //     if (distance < shape.geometry.boundingSphere.radius) { //If the distance or camera is within the objects
+        //         console.log("HELLER");
+        //         return true;
+        //     }
+        //     else {
+        //         return false;
+        //     }
+        // }
         let group = new THREE.Group();
 
 
@@ -767,14 +786,14 @@
             requestAnimationFrame(animate);
             const time = performance.now();
             if (controls.isLocked === true) {
-                for (let i = 0; i < trees.length; i++) {
-                    if (collisionDetection(cursor.position, trees[i]) == true) {
-                        trees[i].material.emissive.setHex(0xff0000);
-                    }
-                    else {
-                        trees[i].material.emissive.setHex(0x000000);
-                    }
-                }
+                // for (let i = 0; i < trees.length; i++) {
+                //     //if (collisionDetection(cursor.position, trees[i]) == true) {
+                //     //   newTree.children[0].material.emissive.setHex(0xff0000);
+                //     // }
+                //     // else {
+                //     //    trees[i].material.emissive.setHex(0x000000);
+                //     // }
+                // }
                 const delta = (time - prevTime) / 1000;
 
                 let yPos = camera.position.y - 5;
@@ -794,19 +813,36 @@
 
 
         function render() {
+            for (let m = 0; m < trees.length; m++) {
+                //  console.log(trees[m], " BITCH");
+                trees[m].children[0].material.emissive.setHex(0x000000);
+            }
 
-
-            const intersections = raycaster.intersectObjects(worldItems, false);
+            raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
+            const intersections = raycaster.intersectObjects(worldItems, true);
+            const lightTrees = raycaster.intersectObjects(trees, true);
             intersection = (intersections.length) > 0 ? intersections[0] : null;
             if (toggle > 0.001 && intersection !== null) {
                 spheres[spheresIndex].position.copy(intersection.point);
                 toggle = 0;
             }
-            raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
+
+            //console.log(lightTrees);
+            if (lightTrees.length > 0) {
+                lightTrees[0].object.material.emissive.set(0xff0000);
+            }
+            // if (intersections.length > 0){
+            //     intersections[0].object.material.emissive.setHex(0xff0000);
+
+            // }
+            // for (let i = 0; i < intersections.length; i++) {
+            //     //intersections[i].object.material.setValues({emissive: 0xff0000});
+            //     intersections[i].object.material.color.emissive = 0xff0000;
+            //    // intersections[i].object.material.color.set(0x000000);
+            // }
 
             let distance = calcDistance(camera.position, cursor);
             if (distance != null) {
-
                 cursor.scale.set(distance * .5, distance * .5, distance * .5);
             }
             toggle += clock.getDelta();
