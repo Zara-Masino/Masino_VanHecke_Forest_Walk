@@ -6,10 +6,24 @@
 
 <body>
     <canvas id="myCanvas" width="800" height="800"></canvas>
+    <script src="Perlin.js"></script>
+    <script src="TreeBuilder.js"></script>
     <script type="module">
         import * as THREE from "http://cs.merrimack.edu/~stuetzlec/three.js-master/build/three.module.js";
-
         import { PointerLockControls } from 'http://cs.merrimack.edu/~stuetzlec/three.js-master/examples/jsm/controls/PointerLockControls.js';
+
+
+
+
+
+
+
+
+
+
+
+
+
         var scene = new THREE.Scene();
         let raycaster = new THREE.Raycaster();
 
@@ -20,8 +34,7 @@
         let displacement = 0;
         let moving = false;
 
-
-
+      
         const spheres = [];
         const spheresIndex = 0;
         let worldItems = [];
@@ -112,91 +125,7 @@
         worldItems.push(moon.bulbLight);
 
 
-        class Perlin {
-            constructor() {
-                this.grad3 =
-                    [[1, 1, 0], [-1, 1, 0], [1, -1, 0], [-1, -1, 0],
-                    [1, 0, 1], [-1, 0, 1], [1, 0, -1], [-1, 0, -1],
-                    [0, 1, 1], [0, -1, 1], [0, 1, -1], [0, -1, -1]];
-                this.p = [];
-                for (var i = 0; i < 256; i++) {
-                    this.p[i] = Math.floor(Math.random() * 256);
-                }
-                // To remove the need for index wrapping, double the permutation table length 
-                this.perm = [];
-                for (i = 0; i < 512; i++) {
-                    this.perm[i] = this.p[i & 255];
-                }
-                // A lookup table to traverse the simplex around a given point in 4D. 
-                // Details can be found where this table is used, in the 4D noise method. 
-                this.simplex = [
-                    [0, 1, 2, 3], [0, 1, 3, 2], [0, 0, 0, 0], [0, 2, 3, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [1, 2, 3, 0],
-                    [0, 2, 1, 3], [0, 0, 0, 0], [0, 3, 1, 2], [0, 3, 2, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [1, 3, 2, 0],
-                    [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0],
-                    [1, 2, 0, 3], [0, 0, 0, 0], [1, 3, 0, 2], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [2, 3, 0, 1], [2, 3, 1, 0],
-                    [1, 0, 2, 3], [1, 0, 3, 2], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [2, 0, 3, 1], [0, 0, 0, 0], [2, 1, 3, 0],
-                    [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0],
-                    [2, 0, 1, 3], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [3, 0, 1, 2], [3, 0, 2, 1], [0, 0, 0, 0], [3, 1, 2, 0],
-                    [2, 1, 0, 3], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [3, 1, 0, 2], [0, 0, 0, 0], [3, 2, 0, 1], [3, 2, 1, 0]];
-            }
-            dot(g, x, y) {
-                return g[0] * x + g[1] * y;
-            }
-            noise(xin, yin) {
-                var n0, n1, n2; // Noise contributions from the three corners 
-                // Skew the input space to determine which simplex cell we're in 
-                var F2 = 0.5 * (Math.sqrt(3.0) - 1.0);
-                var s = (xin + yin) * F2; // Hairy factor for 2D 
-                var i = Math.floor(xin + s);
-                var j = Math.floor(yin + s);
-                var G2 = (3.0 - Math.sqrt(3.0)) / 6.0;
-                var t = (i + j) * G2;
-                var X0 = i - t; // Unskew the cell origin back to (x,y) space 
-                var Y0 = j - t;
-                var x0 = xin - X0; // The x,y distances from the cell origin 
-                var y0 = yin - Y0;
-                // For the 2D case, the simplex shape is an equilateral triangle. 
-                // Determine which simplex we are in. 
-                var i1, j1; // Offsets for second (middle) corner of simplex in (i,j) coords 
-                if (x0 > y0) { i1 = 1; j1 = 0; } // lower triangle, XY order: (0,0)->(1,0)->(1,1) 
-                else { i1 = 0; j1 = 1; }      // upper triangle, YX order: (0,0)->(0,1)->(1,1) 
-                // A step of (1,0) in (i,j) means a step of (1-c,-c) in (x,y), and 
-                // a step of (0,1) in (i,j) means a step of (-c,1-c) in (x,y), where 
-                // c = (3-sqrt(3))/6 
-                var x1 = x0 - i1 + G2; // Offsets for middle corner in (x,y) unskewed coords 
-                var y1 = y0 - j1 + G2;
-                var x2 = x0 - 1.0 + 2.0 * G2; // Offsets for last corner in (x,y) unskewed coords 
-                var y2 = y0 - 1.0 + 2.0 * G2;
-                // Work out the hashed gradient indices of the three simplex corners 
-                var ii = i & 255;
-                var jj = j & 255;
-                var gi0 = this.perm[ii + this.perm[jj]] % 12;
-                var gi1 = this.perm[ii + i1 + this.perm[jj + j1]] % 12;
-                var gi2 = this.perm[ii + 1 + this.perm[jj + 1]] % 12;
-                // Calculate the contribution from the three corners 
-                var t0 = 0.5 - x0 * x0 - y0 * y0;
-                if (t0 < 0) n0 = 0.0;
-                else {
-                    t0 *= t0;
-                    n0 = t0 * t0 * this.dot(this.grad3[gi0], x0, y0);  // (x,y) of grad3 used for 2D gradient 
-                }
-                var t1 = 0.5 - x1 * x1 - y1 * y1;
-                if (t1 < 0) n1 = 0.0;
-                else {
-                    t1 *= t1;
-                    n1 = t1 * t1 * this.dot(this.grad3[gi1], x1, y1);
-                }
-                var t2 = 0.5 - x2 * x2 - y2 * y2;
-                if (t2 < 0) n2 = 0.0;
-                else {
-                    t2 *= t2;
-                    n2 = t2 * t2 * this.dot(this.grad3[gi2], x2, y2);
-                }
-                // Add contributions from each corner to get the final noise value. 
-                // The result is scaled to return values in the interval [-1,1]. 
-                return 70.0 * (n0 + n1 + n2);
-            }
-        }
+
 
 
         var waterGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
@@ -263,6 +192,261 @@
         terrain.castShadow = true;
         // plane.receiveShadow = true;
         worldItems.push(terrain);
+
+
+
+        function TreeBuilder(string, params) {
+            this.string = string;
+            this.params = params;
+
+            this.build = function () {
+                //init params
+                var state = {
+                    bRadius: this.params.branchRadius,
+                    bLength: this.params.branchLength,
+                    bReduction: this.params.branchReduction,
+                    bMinRadius: this.params.branchMinRadius,
+                    position: new THREE.Vector3(0, 0, 0),
+                    rotation: new THREE.Quaternion()
+                }
+                var stateStack = [];
+
+                //init object
+                var tree = new THREE.Object3D();
+                //var textureLoader = new THREE.TextureLoader();
+                var branchMaterial = new THREE.MeshBasicMaterial({ color: 0xf83782 });
+                var appleMaterial = new THREE.MeshBasicMaterial({ color: 0xf83782 });
+                // var branchMaterial = new THREE.MeshBasicMaterial({ color: 'brown', map: textureLoader.load("textures/branch.jpg") });
+                // var appleMaterial = new THREE.MeshBasicMaterial({ color: 'red', map: textureLoader.load("textures/apple.jpg") });
+
+                for (var i = 0; i < this.string.length; i++) {
+                    var char = this.string.charAt(i);
+                    if (char == "F") {
+                        tree.add(buildBranch(state, branchMaterial));
+                    }
+                    if (char == "X") {
+                        tree.add(buildLeaf(state, appleMaterial));
+                    }
+                    if (char == "+") {
+                        state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), this.params.delta * Math.PI / 180));
+                    }
+                    if (char == "-") {
+                        state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -this.params.delta * Math.PI / 180));
+                    }
+                    if (char == "&") {
+                        state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -this.params.delta * Math.PI / 180));
+                    }
+                    if (char == "^") {
+                        state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.params.delta * Math.PI / 180));
+                    }
+                    if (char == "<") {
+                        state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -this.params.delta * Math.PI / 180));
+                    }
+                    if (char == ">") {
+                        state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), this.params.delta * Math.PI / 180));
+                    }
+                    if (char == "[") {
+                        stateStack.push(cloneState(state));
+                        state.bRadius = (state.bRadius - state.bReduction) > state.bMinRadius ? (state.bRadius - state.bReduction) : state.bRadius;
+                    }
+                    if (char == "]") {
+                        state = cloneState(stateStack.pop());
+                    }
+
+                }
+                tree.castShadow = true;
+                return tree;
+            }
+
+        }
+
+        function buildBranch(state, material) {
+            var transform = new THREE.Quaternion();
+            transform.multiply(state.rotation);
+
+            var position = new THREE.Vector3(0.0, state.bLength / 2, 0.0);
+            position.applyQuaternion(state.rotation);
+            state.position.add(position);
+
+            var geometry = new THREE.CylinderBufferGeometry(state.bRadius, state.bRadius, state.bLength, 16);
+            var branch = new THREE.Mesh(geometry, material);
+            branch.quaternion.copy(state.rotation);
+            branch.position.copy(state.position);
+
+            state.position.add(position);
+            branch.castShadow = true;
+            return branch;
+
+        }
+
+        function buildLeaf(state, material) {
+            var transform = new THREE.Quaternion();
+            transform.multiply(state.rotation);
+
+            var originalPosition = new THREE.Vector3().copy(state.position);
+            var position = new THREE.Vector3(0, state.bLength / 8, 0.0);
+            position.applyQuaternion(state.rotation);
+            state.position.add(position);
+
+            var geometry = new THREE.SphereBufferGeometry(state.bLength / 4, 16);
+            var branch = new THREE.Mesh(geometry, material);
+            branch.quaternion.copy(state.rotation);
+            branch.position.copy(state.position);
+
+            state.position = new THREE.Vector3().copy(originalPosition);
+            branch.castShadow = true;
+            return branch;
+        }
+
+        function cloneState(state) {
+            return {
+                bRadius: state.bRadius,
+                bLength: state.bLength,
+                bReduction: state.bReduction,
+                bMinRadius: state.bMinRadius,
+                position: new THREE.Vector3().copy(state.position),
+                rotation: new THREE.Quaternion().copy(state.rotation)
+            }
+        }
+
+
+        function Params(axiom, iterations, delta, branchLength,
+            branchRadius, branchReduction, branchMinRadius) {
+            this.axiom = axiom ? axiom : "F";
+            this.iterations = iterations ? iterations : 4;
+            this.delta = delta ? delta : 25;
+            this.branchLength = branchLength ? branchLength : 3;
+            this.branchRadius = branchRadius ? branchRadius : 0.4;
+            this.branchReduction = branchReduction ? branchReduction : 0.1;
+            this.branchMinRadius = branchMinRadius ? branchMinRadius : 0.1;
+        }
+
+
+        function selectPreset() {
+            var preset = $("#preset").val();
+            if (preset == "Example A") {
+                params = new Params("F", 5, 20, 4, 0.2);
+                rules = "F=F[+F]F[-F][F]";
+            }
+            if (preset == "Example B") {
+                params = new Params("F", 5, 25.7, 5, 1, 0.2, 0.2);
+                rules = "F=F[+F]F[-F]F";
+            }
+            if (preset == "Example C") {
+                params = new Params("F", 4, 22.5, 4, 0.1);
+                rules = "F=FF-[-F+F+F]+[+F-F-F]";
+            }
+            if (preset == "Example D") {
+                params = new Params("X", 7, 20);
+                rules = "X=F[+X]F[-X]+X\nF=FF";
+            }
+            if (preset == "Example E") {
+                params = new Params("X", 7, 25.7);
+                rules = "X=F[+X][-X]FX\nF=FF";
+            }
+            if (preset == "Example F") {
+                params = new Params("X", 5, 22.5);
+                rules = "X=F-[[X]+X]+F[+FX]-X\nF=FF";
+            }
+            if (preset == "Example G") {
+                params = new Params("FFFFFA", 4, 25);
+                rules = "A=F[++A]X[--A]^^^A";
+            }
+            if (preset == "Example S") {
+                params = new Params("F", 5, 25, 3, 0.3);
+                rules = "F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F";
+            }
+        }
+
+        function parseRules(rules) {
+            var result = {};
+            rules.split("\n").forEach(function (a) {
+                var line = a.split("=");
+                if (!result[line[0]]) {
+                    result[line[0]] = [];
+                }
+                result[line[0]].push(line[1])
+            });
+
+            return result;
+        }
+
+
+        function Rewriter(rules) {
+            this.rules = rules;
+
+            this.rewrite = function (params) {
+                var result = params.axiom;
+                for (var i = 0; i < params.iterations; i++) {
+                    var localResult = "";
+                    for (var j = 0; j < result.length; j++) {
+                        var char = result.charAt(j);
+                        var rule = this.rules[char];
+                        if (rule !== undefined) {
+                            localResult += getRule(rule);
+                        } else {
+                            localResult += char;
+                        }
+                    }
+                    result = localResult;
+                }
+                return result;
+            };
+
+        }
+
+        function getRule(rules) {
+            var probability = rules.length;
+            var choice = probability > 1 ?
+                parseInt((((Math.random() * probability) + 1) * 1000) / 1000) - 1 : 0;
+
+            return rules[choice];
+        }
+
+
+        //let rules = "F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F";
+        let rules = parseRules( "F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F");
+        let params = new Params("F", 5, 25, 3, 0.3);
+        var rewriter = new Rewriter(rules);
+        var string = rewriter.rewrite(params);
+        //console.log(string)
+        let newTree = new TreeBuilder(string, params).build();
+        let secondHalf = new TreeBuilder(string, params).build();
+        console.log(secondHalf.rotation);
+        secondHalf.rotation.y = 90;
+        scene.add(secondHalf);
+
+
+        //axiom, iterations, delta, branchLength, branchRadius, branchReduction, branchMinRadius
+        //let params = new Params("F", 5, 25, 3, 0.3);
+        //let string = "F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F";
+        //let newTree = new TreeBuilder(string, params).build();
+        scene.add(newTree);
+        console.log(newTree);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -357,7 +541,7 @@
             return distance; //Returns distance
         }
 
-      
+
         function makeTrees(x, y) {
             let testgeometry = new THREE.SphereGeometry(25, 32, 32);
             testgeometry.computeBoundingSphere(); //Compute a bounding sphere around each object
@@ -472,7 +656,7 @@
 
             leftLeg.position.set(-3.3, -12, 0);
             group.add(leftLeg);
-            console.log(group.children[0].lookAt, 'GROUP LOOK AT');
+            //console.log(group.children[0].lookAt, 'GROUP LOOK AT');
         }
 
         makeBody();
@@ -493,17 +677,17 @@
             let intersect = ray.intersectObject(terrain);
 
             if (intersect.length != 0) {
-                    if (moving == true) {
-                        displacement = sinwave * .1;
-                        camera.position.y = (intersect[0].point.y + 20) + displacement * camera.position.y;
-                    }
-                    else {
-                        camera.position.y = (intersect[0].point.y + 20)
-                    }
+                if (moving == true) {
+                    displacement = sinwave * .1;
+                    camera.position.y = (intersect[0].point.y + 20) + displacement * camera.position.y;
                 }
                 else {
-                    camera.position.y = 50;
+                    camera.position.y = (intersect[0].point.y + 20)
                 }
+            }
+            else {
+                camera.position.y = 50;
+            }
 
             requestAnimationFrame(animate);
             const time = performance.now();
@@ -617,8 +801,8 @@
         document.addEventListener('keydown', onDocumentKeyDown, false);
 
         document.addEventListener('keyup', (event) => {
-                moving = false;
-            });
+            moving = false;
+        });
 
         animate();
         render();
