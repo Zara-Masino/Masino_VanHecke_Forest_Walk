@@ -140,7 +140,7 @@
 
 
         var terrainGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
-        var terrainMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/sand3.jpg') });
+        var terrainMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/sand3.jpg'), side: THREE.DoubleSide });
         var terrain = new THREE.Mesh(terrainGeom, terrainMat);
         terrain.rotation.x = -Math.PI / 2;
         scene.add(terrain);
@@ -176,7 +176,7 @@
 
 
         var perlin = new Perlin();
-        var peak = 30;
+        var peak = 20;
         var smoothing = 300;
         var vertices = terrain.geometry.attributes.position.array;
         for (var i = 0; i <= vertices.length; i += 3) {
@@ -561,40 +561,59 @@
         }
 
         function randomizePositions() {
+
+           
             let position = new THREE.Vector3(0, 0, 0);
             let rayHeight = new THREE.Raycaster();
+            terrain.updateMatrixWorld()
+            scene.updateMatrixWorld();
+            rayHeight.layers.enableAll();
             var treePos = new THREE.Vector3();
 
 
             let xPos = Math.random() * 380;
-            let yPos = 70;
+            let yPos = 100;
             let zPos = Math.random() * 380;
             if (random() == true) {
                 xPos *= -1;
+                
             }
             if (random() == true) {
                 zPos *= -1;
+               
             }
+            treePos.x = xPos;
+            treePos.z = zPos;
+            treePos.y = yPos;
 
 
             let rayDirection = new THREE.Vector3(0, -1, 0);
-            rayHeight.set(treePos, rayDirection.normalize());
-            let intersectHeight = rayHeight.intersectObject(terrain);
+            rayHeight.ray.set(treePos, rayDirection.normalize());
+          
+            let intersectHeight = rayHeight.intersectObject(terrainShadow);
 
-            scene.updateMatrixWorld();
+            
 
             // heightRay.set(rayPosition, rayDirection);
             //let intersectHeight = heightRay.intersectObject(terrain);
 
-            console.log(intersectHeight, 'intersect height IS');
+            //  let testgeometry = new THREE.SphereGeometry(25, 32, 32);
+            // testgeometry.computeBoundingSphere(); //Compute a bounding sphere around each object
+            // let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+            // let mesh = new THREE.Mesh(testgeometry, testMaterial);
+            // console.log(rayHeight);
+            // mesh.position.set(rayHeight.ray.origin.x,rayHeight.ray.origin.y,rayHeight.ray.origin.z);
+            // scene.add(mesh);
+
+           
 
 
             if (intersectHeight.length != 0) {
                 yPos = intersectHeight[0].point.y;
             }
+           
 
             treePos.set(xPos, yPos, zPos);
-
             position.z = zPos;
             position.x = xPos;
             position.y = yPos;
@@ -607,9 +626,19 @@
             //axiom, iterations, delta, branchLength, branchRadius, branchReduction, branchMinRadius
             //let rules = parseRules("F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F");
             //let params = new Params("F", 4, 25, 4, 0.6);
+
              let params = new Params("F", 3, 22.5);
+
+
              //"F=F>[<+F]F[-F&]<F\nF=F&[+F^&^]F\nF=F[-F&]F&"
-             let rules = parseRules("F=F>[<+F]F[-F&]<F\nF=F&[+F^&^]F\nF=F[-F&]F&");
+
+             //let rules = parseRules("F=F>[<+F]F[-F&]<F\nF=F&[+F^&^]F\nF=F[-F&]F&"); //1 set of rules
+
+             //UGLY SAD TREE let rules = parseRules("F=F>[<+F]F[-F&&&^^FF]<F\nff&^^X\nF=F[AA-F&]F&");
+
+             let rules = parseRules("F=F>[<+F]F[-F[]>&^^FF]<F\n\n<FX>");
+
+
              //let rules = parseRules("X=F-[[X]+X]+F[+FX]-X\nF=FF");
             //let params = new Params("A", 2, 22.5);
             //let rules = parseRules("A=F[++A]XF^^-[--A]^^^A");
@@ -630,7 +659,7 @@
             //worldItems.push(secondHalf);
             // trees.push(secondHalf);
 
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 20; i++) {
                 let positionTree = randomizePositions();
                 let newTree = new TreeBuilder(string, params).build();
                 // console.log(newTree.children[0].geometry);
@@ -757,7 +786,6 @@
         scene.add(group);
 
         function animate() {
-
             change += .2;
             sinwave = Math.sin(change);
 
