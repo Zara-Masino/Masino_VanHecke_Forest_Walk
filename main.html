@@ -176,7 +176,7 @@
 
 
         var perlin = new Perlin();
-        var peak = 20;
+        var peak = 30;
         var smoothing = 300;
         var vertices = terrain.geometry.attributes.position.array;
         for (var i = 0; i <= vertices.length; i += 3) {
@@ -229,7 +229,7 @@
                 var tree = new THREE.Object3D();
                 //var textureLoader = new THREE.TextureLoader();
                 var branchMaterial = new THREE.MeshPhongMaterial({ color: 0x964B00 });
-                var appleMaterial = new THREE.MeshPhongMaterial({ color: 0xf83782 });
+                var appleMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
                 // var branchMaterial = new THREE.MeshBasicMaterial({ color: 'brown', map: textureLoader.load("textures/branch.jpg") });
                 // var appleMaterial = new THREE.MeshBasicMaterial({ color: 'red', map: textureLoader.load("textures/apple.jpg") });
 
@@ -302,7 +302,7 @@
             position.applyQuaternion(state.rotation);
             state.position.add(position);
 
-            var geometry = new THREE.SphereBufferGeometry(state.bLength / 4, 16);
+            var geometry = new THREE.SphereBufferGeometry(state.bLength / 2, 16);
             var branch = new THREE.Mesh(geometry, material);
             branch.quaternion.copy(state.rotation);
             branch.position.copy(state.position);
@@ -627,7 +627,7 @@
             //let rules = parseRules("F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F");
             //let params = new Params("F", 4, 25, 4, 0.6);
 
-             let params = new Params("F", 3, 22.5);
+             let params = new Params("F", 2, 22.5, 25, 2);
 
 
              //"F=F>[<+F]F[-F&]<F\nF=F&[+F^&^]F\nF=F[-F&]F&"
@@ -636,8 +636,8 @@
 
              //UGLY SAD TREE let rules = parseRules("F=F>[<+F]F[-F&&&^^FF]<F\nff&^^X\nF=F[AA-F&]F&");
 
-             let rules = parseRules("F=F>[<+F]F[-F[]>&^^FF]<F\n\n<FX>");
-
+             //let rules = parseRules("F=F>[<+F]F[-F[]>&^^FF]<F\n\n<FX>");
+             let rules = parseRules("F=FX>[<+F]F[-F&X]<F\nF=F&[+F^&^X]F\nF=F[-F&X]F&");
 
              //let rules = parseRules("X=F-[[X]+X]+F[+FX]-X\nF=FF");
             //let params = new Params("A", 2, 22.5);
@@ -659,7 +659,7 @@
             //worldItems.push(secondHalf);
             // trees.push(secondHalf);
 
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 30; i++) {
                 let positionTree = randomizePositions();
                 let newTree = new TreeBuilder(string, params).build();
                 // console.log(newTree.children[0].geometry);
@@ -839,11 +839,13 @@
             renderer.render(scene, camera);
         }
 
+        let hold = [];
 
         function render() {
-            for (let m = 0; m < trees.length; m++) {
+            for (let m = 0; m < hold.length; m++) {
                 //  console.log(trees[m], " BITCH");
-                trees[m].children[0].material.emissive.setHex(0x000000);
+                hold[m].material.emissive.setHex(0x000000);
+                hold.pop();
             }
 
             raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
@@ -857,6 +859,7 @@
 
             //console.log(lightTrees);
             if (lightTrees.length > 0) {
+                hold.push(lightTrees[0].object);
                 lightTrees[0].object.material.emissive.set(0xff0000);
             }
             // if (intersections.length > 0){
