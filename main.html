@@ -35,7 +35,7 @@
 
 
 
-        var peak = 60;
+        var peak = 50;
         var smoothing = 300;
 
         let speed = 2;
@@ -224,7 +224,7 @@
         }
 
 
-        function createCelestials(){  
+        function createCelestials() {
             moon = new makeLights(moonColor[0], -280, -280, 0, .1);
             sun = new makeLights(sunColors[4], 280, 280, 0, 1);
             worldItems.push(sun.bulbLight);
@@ -284,10 +284,10 @@
                     let rand = Math.random();
                     // if the character is F, build 0, 1, or 2 branches depending on rand
                     if (char == "F") {
-                        if(rand < .75){
+                        if (rand < .75) {
                             tree.add(buildBranch(state, branchMaterial));
                         }
-                        else if (rand >.95){
+                        else if (rand > .95) {
                             tree.add(buildBranch(state, branchMaterial));
                             tree.add(buildBranch(state, branchMaterial));
                         }
@@ -688,150 +688,38 @@
         // let rules = parseRules("F=F[+F]F[F>>][<F]\nF=F[+F]F[+<<F][F>]"); 
         //axiom, iterations, delta, branchLength, branchRadius, branchReduction, branchMinRadius
 
+        // a function that makes the trees for the scene. There are 3 types of wood and 3 grammars
         function makeTrees() {
-
-            for (let i = 0; i < 10; i++) {
-                var oakwood = new THREE.MeshPhongMaterial({ color: 0x80471C, map: loader.load("land/oakwood.jpg") });
-
-                let params = new Params("F", 2, 22.5, 25, 2);
-                let rules = parseRules("F=F[+F]F[F>>][<FX]\nF=F[+F]F[+<<F][F>X]");
+            for (let i = 0; i < 30; i++) {
+                let wood;
+                let params;
+                let rules;
+                if (i < 10) {
+                    wood = new THREE.MeshPhongMaterial({ color: 0x80471C, map: loader.load("land/oakwood.jpg") });
+                    params = new Params("F", 2, 22.5, 25, 2);
+                    rules = parseRules("F=F[+F]F[F>>][<FX]\nF=F[+F]F[+<<F][F>X]");
+                }
+                else if (i >= 20) {
+                    wood = new THREE.MeshPhongMaterial({ color: 0xB00000, map: loader.load("land/redwood.jpg") });
+                    params = new Params("F", 3, 15, 15, 2);
+                    rules = parseRules("F=F>[<+F]F[+F>]<F\nF=F>[+F^>^]F\nF=F[+F>]F>");
+                }
+                else {
+                    wood = new THREE.MeshPhongMaterial({ color: 0xFFFFFF, map: loader.load("land/birch1.jpg") });
+                    params = new Params("F", 2, 30, 20, 2);
+                    rules = parseRules("F=F[+F]F[F>>][<FX]\nF=F[+F]F[+<<F][F>X]");
+                }
                 var rewriter = new Rewriter(rules);
                 var string = rewriter.rewrite(params);
                 let positionTree = randomizePositions();
-                //console.log(string);
-                let newTree = new TreeBuilder(string, params, oakwood).build();
-                // console.log(newTree.children[0].geometry);
-                // newTree.children[0].material.emissive.setHex(0xff0000);
-                // for(let j = 0; j < newTree.children.length/2; j++){
-                //     newTree.children[j].material.emissive.setHex(0xff0000);
-                // }
-                //console.log(newTree, 'new tree');
+                let newTree = new TreeBuilder(string, params, wood).build();
                 newTree.position.set(positionTree.x, positionTree.y, positionTree.z);
                 newTree.castShadow = true;
                 newTree.receiveShadow = true;
-                //trees.push(newTree); //ADDING NEW TREE TO TREES ARRAY CAUSES ERROR BECAUSE THERE IS NO BOUNDING SPHERE FOR THE TREE
-                //AND BECAUSE YOU CANT SET THE EMISSIVE OF THE TREE FOR HIGHLIGHTING IN SUCH A WAY!!
                 worldItems.push(newTree);
                 trees.push(newTree);
                 scene.add(newTree);
             }
-
-            for (let i = 0; i < 10; i++) {
-                var redwood = new THREE.MeshPhongMaterial({ color: 0xB00000, map: loader.load("land/redwood.jpg") });
-                let params = new Params("F", 3, 15, 15, 2);
-                let rules = parseRules("F=F>[<+F]F[+F>]<F\nF=F>[+F^>^]F\nF=F[+F>]F>");
-
-                var rewriter = new Rewriter(rules);
-                var string = rewriter.rewrite(params);
-                let positionTree = randomizePositions();
-                // console.log(string);
-                let newTree = new TreeBuilder(string, params, redwood).build();
-                // console.log(newTree.children[0].geometry);
-                // newTree.children[0].material.emissive.setHex(0xff0000);
-                // for(let j = 0; j < newTree.children.length/2; j++){
-                //     newTree.children[j].material.emissive.setHex(0xff0000);
-                // }
-                //console.log(newTree, 'new tree');
-                newTree.position.set(positionTree.x, positionTree.y, positionTree.z);
-                newTree.castShadow = true;
-                newTree.receiveShadow = true;
-                //trees.push(newTree); //ADDING NEW TREE TO TREES ARRAY CAUSES ERROR BECAUSE THERE IS NO BOUNDING SPHERE FOR THE TREE
-                //AND BECAUSE YOU CANT SET THE EMISSIVE OF THE TREE FOR HIGHLIGHTING IN SUCH A WAY!!
-                worldItems.push(newTree);
-                trees.push(newTree);
-                scene.add(newTree);
-            }
-
-            for (let i = 0; i < 10; i++) {
-                var birch = new THREE.MeshPhongMaterial({ color: 0xFFFFFF, map: loader.load("land/birch1.jpg") });
-                let params = new Params("F", 2, 30, 20, 2);
-                let rules = parseRules("F=F[+F]F[F>>][<FX]\nF=F[+F]F[+<<F][F>X]");
-
-                var rewriter = new Rewriter(rules);
-                var string = rewriter.rewrite(params);
-                let positionTree = randomizePositions();
-                //   console.log(string);
-                let newTree = new TreeBuilder(string, params, birch).build();
-                // console.log(newTree.children[0].geometry);
-                // newTree.children[0].material.emissive.setHex(0xff0000);
-                // for(let j = 0; j < newTree.children.length/2; j++){
-                //     newTree.children[j].material.emissive.setHex(0xff0000);
-                // }
-                //console.log(newTree, 'new tree');
-                newTree.position.set(positionTree.x, positionTree.y, positionTree.z);
-                newTree.castShadow = true;
-                newTree.receiveShadow = true;
-                //trees.push(newTree); //ADDING NEW TREE TO TREES ARRAY CAUSES ERROR BECAUSE THERE IS NO BOUNDING SPHERE FOR THE TREE
-                //AND BECAUSE YOU CANT SET THE EMISSIVE OF THE TREE FOR HIGHLIGHTING IN SUCH A WAY!!
-                worldItems.push(newTree);
-                trees.push(newTree);
-                scene.add(newTree);
-            }
-
-            //axiom, iterations, delta, branchLength, branchRadius, branchReduction, branchMinRadius
-            //let rules = parseRules("F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F");
-            //let params = new Params("F", 4, 25, 4, 0.6);
-
-            // let params = new Params("F", 2, 22.5, 25, 2); #1
-
-            // grammar 1
-            let params = new Params("F", 2, 15, 15, 2);
-
-
-            //"F=F>[<+F]F[-F&]<F\nF=F&[+F^&^]F\nF=F[-F&]F&"
-
-            //let rules = parseRules("F=F>[<+F]F[-F&]<F\nF=F&[+F^&^]F\nF=F[-F&]F&"); //1 set of rules
-
-            //UGLY SAD TREE let rules = parseRules("F=F>[<+F]F[-F&&&^^FF]<F\nff&^^X\nF=F[AA-F&]F&");
-
-            //let rules = parseRules("F=F>[<+F]F[-F[]>&^^FF]<F\n\n<FX>");
-
-            let rules = parseRules("F=F[+F]F[F>>][<F]\nF=F[+F]F[+<<F][F>]");
-
-            //  let rules = parseRules("F=F[+FX]F[+F][F]\nF=F[+&&FX]F[+F>>][F]\nF=F[+<<F]F[+F]&&[F]\nF=F[+F<<]F[+&<F][F]")
-            // let rules = parseRules("F=F[+F]F[F>>][<F]\nF=F[+F]F[+<<F][F>]");
-
-            //let rules = parseRules("X=F-[[X]+X]+F[+FX]-X\nF=FF");
-            //let params = new Params("A", 2, 22.5);
-            //let rules = parseRules("A=F[++A]XF^^-[--A]^^^A");
-            var rewriter = new Rewriter(rules);
-            var string = rewriter.rewrite(params);
-
-
-            // let testgeometry = new THREE.SphereGeometry(25, 32, 32);
-            // testgeometry.computeBoundingSphere(); //Compute a bounding sphere around each object
-            // let testMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
-            // let mesh = new THREE.Mesh(testgeometry, testMaterial);
-
-
-            // newTree.children[0].computeBoundingSphere();
-            //let secondHalf = new TreeBuilder(string, params).build();
-            //secondHalf.rotation.y = 90;
-            //scene.add(secondHalf);
-            //worldItems.push(secondHalf);
-            // trees.push(secondHalf);
-
-            // for (let i = 0; i < 30; i++) {
-            //     let positionTree = randomizePositions();
-            //     console.log(string);
-            //     let newTree = new TreeBuilder(string, params).build();
-            //     // console.log(newTree.children[0].geometry);
-            //     // newTree.children[0].material.emissive.setHex(0xff0000);
-            //     // for(let j = 0; j < newTree.children.length/2; j++){
-            //     //     newTree.children[j].material.emissive.setHex(0xff0000);
-            //     // }
-            //     //console.log(newTree, 'new tree');
-            //     newTree.position.set(positionTree.x, positionTree.y, positionTree.z);
-            //     newTree.castShadow = true;
-            //     newTree.receiveShadow = true;
-            //     //trees.push(newTree); //ADDING NEW TREE TO TREES ARRAY CAUSES ERROR BECAUSE THERE IS NO BOUNDING SPHERE FOR THE TREE
-            //     //AND BECAUSE YOU CANT SET THE EMISSIVE OF THE TREE FOR HIGHLIGHTING IN SUCH A WAY!!
-            //     worldItems.push(newTree);
-            //     trees.push(newTree);
-            //     scene.add(newTree);
-            // }
-
-
         }
 
 
@@ -849,7 +737,6 @@
                 return false;
             }
         }
-
 
 
         function makeBody() {
@@ -939,7 +826,7 @@
 
             if (intersect.length != 0) {
                 if (moving == true) {
-                    displacement = sinwave * .1;
+                    displacement = sinwave * .2;
                     camera.position.y = (intersect[0].point.y + 20) + displacement * camera.position.y;
                 }
                 else {
@@ -1069,8 +956,6 @@
             else if (keyCode == 83) movement = "backward";
             if (movement != 0) moveAround();
         }
-
-
 
         function moveAround() {
             moving = true;
