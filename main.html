@@ -23,19 +23,50 @@
         camera.position.set(0, 80, 10);
         scene.add(camera);
 
+
+        var perlin = new Perlin();
+        let loader = new THREE.TextureLoader(); //Texture loader
         let raycaster = new THREE.Raycaster();
-        let collision = [];
+        let group = new THREE.Group();
+
+        let clock = new THREE.Clock();
+        let prevTime = performance.now();
+        let previousTime = performance.now(); //Gets current Delta time
+
+
+
+        var peak = 60;
+        var smoothing = 300;
+
+        let speed = 2;
+        let turnSpeed = .2;
+
+        let change = 0;
+        let sinwave = 0;
+        let displacement = 0;
+        let toggle = 0;
+
+        let hit = false;
+        let moving = false;
+
+        let intersection = null;
+
+
         let trees = [];
+        let spheres = [];
+        let worldItems = [];
 
-
+        var movement;
+        var oldCamera;
 
         let worldGeom;
         let worldMat;
         let world;
+
         let waterGeom;
         let waterMat;
-        //  let waterMatBack;
         let water;
+
         let terrainGeom;
         let terrainMat;
         let terrain;
@@ -47,33 +78,13 @@
         let cursorMat;
         let cursor;
 
-        let change = 0;
-        let sinwave = 0;
-        let displacement = 0;
-        let moving = false;
-
-        let clock = new THREE.Clock();
-        let turnSpeed = .2;
-
-        let spheres = [];
-        let spheresIndex = 0;
-        let worldItems = [];
-        let intersection = null;
-        let toggle = 0;
-
-        let prevTime = performance.now();
+        let sun;
+        let moon;
 
         //Colors for sky/sun/moon
         let sunColors = [0xf7e2ba, 0xffdaa8, 0xf8cb7c, 0xfdb25b, 0xfa9e4d];
         let moonColor = [0xdde2e5];
         let skyColors = [0x000608, 0x072f41, 0x094f6d, 0x436e91, 0x5e88b8, 0x7998bb];
-
-        let yheight;
-
-        let loader = new THREE.TextureLoader(); //Texture loader
-
-
-        let previousTime = performance.now(); //Gets current Delta time
 
         let renderer = new THREE.WebGLRenderer({ canvas: myCanvas, antialias: true });
         renderer.setClearColor(0xADD8E6);//Sets color of renderer
@@ -84,6 +95,7 @@
         renderer.shadowMapSoft = true; //Specifies type of shadow
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+        // pointer lock controls for first person camera movement 
         let controls = new PointerLockControls(camera, document.body); //Enables pointerlock controls
         document.addEventListener('click', function () {
             controls.lock(); //Locks pointerlock controls upon the user clicking
@@ -119,7 +131,7 @@
 
         }
 
-      
+
 
 
         //Creates the sun/moon and their corresponding point lights
@@ -147,10 +159,7 @@
         }
 
         //Creates moon and sun and adds those to the worldItems (so that cursor will recognize them)
-        let moon = new makeLights(moonColor[0], -280, -280, 0, .1);
-        let sun = new makeLights(sunColors[4], 280, 280, 0, 1);
-        worldItems.push(sun.bulbLight);
-        worldItems.push(moon.bulbLight);
+
 
 
         //Creates terrain and water that will appear in the scene
@@ -181,7 +190,7 @@
             }); //Makes terrain doublesided
             terrain = new THREE.Mesh(terrainGeom, terrainMat); //Creates terrain mesh
             terrain.rotation.x = -Math.PI / 2;//Rotates terrain so that it appears on the ground surface
-           
+
             scene.add(terrain);
 
 
@@ -196,49 +205,31 @@
             terrainShadow.rotation.copy(terrain.rotation);//Copies terrains rotation
             scene.add(terrainShadow);
 
+
+            //src: http://www.stephanbaker.com/post/perlinterrain/
+            var vertices = terrain.geometry.attributes.position.array;
+            for (var i = 0; i <= vertices.length; i += 3) {
+                vertices[i + 2] = peak * perlin.noise(
+                    vertices[i] / smoothing,
+                    vertices[i + 1] / smoothing
+                );
+            }
+            terrain.geometry.attributes.position.needsUpdate = true;
+            terrain.geometry.computeVertexNormals();
+
+
+            terrain.castShadow = true;
+            // plane.receiveShadow = true;
+            worldItems.push(terrain);
         }
 
-        initCursor();
-        initWorld();
-        createLandAndWater();
 
-
-        var peak = 60;
-        var vertices = terrain.geometry.attributes.position.array;
-        for (var i = 0; i <= vertices.length; i += 3) {
-            vertices[i + 2] = peak * Math.random();
+        function createCelestials(){  
+            moon = new makeLights(moonColor[0], -280, -280, 0, .1);
+            sun = new makeLights(sunColors[4], 280, 280, 0, 1);
+            worldItems.push(sun.bulbLight);
+            worldItems.push(moon.bulbLight);
         }
-        terrain.geometry.attributes.position.needsUpdate = true;
-        terrain.geometry.computeVertexNormals();
-
-
-
-
-
-
-
-
-
-
-
-        //src: http://www.stephanbaker.com/post/perlinterrain/
-        var perlin = new Perlin();
-        var peak = 60;
-        var smoothing = 300;
-        var vertices = terrain.geometry.attributes.position.array;
-        for (var i = 0; i <= vertices.length; i += 3) {
-            vertices[i + 2] = peak * perlin.noise(
-                vertices[i] / smoothing,
-                vertices[i + 1] / smoothing
-            );
-        }
-        terrain.geometry.attributes.position.needsUpdate = true;
-        terrain.geometry.computeVertexNormals();
-
-
-        terrain.castShadow = true;
-        // plane.receiveShadow = true;
-        worldItems.push(terrain);
 
 
 
@@ -585,12 +576,10 @@
             var treePos = new THREE.Vector3();
 
 
-            // let xPos = Math.random() * 380;
             let xPos = Math.random() * (380 - 5) + 5;
 
             let yPos = 100;
 
-            //let zPos = Math.random() * 380;
             let zPos = Math.random() * (380 - 5) + 5;
             if (random() == true) {
                 xPos *= -1;
@@ -799,17 +788,7 @@
 
         }
 
-        makeTrees();
-        console.log("final trees ", trees);
-        //console.log(worldItems);
-        //console.log(trees);
-        // let test = new makeTrees(50, 10);
-        // trees.push(test);
-        // let test2 = new makeTrees(-50, 10);
-        // trees.push(test2);
-        // collision.push(test);
-        // collision.push(test2);
-        // collision.push(cube);
+
 
         // Function which detects whether the camera has collided with an object and then provides
         // some functionality to show that the collision was dealt with
@@ -824,7 +803,6 @@
                 return false;
             }
         }
-        let group = new THREE.Group();
 
 
 
@@ -899,9 +877,6 @@
             //console.log(group.children[0].lookAt, 'GROUP LOOK AT');
         }
 
-        makeBody();
-
-        scene.add(group);
 
         function animate() {
             change += .2;
@@ -957,7 +932,6 @@
             renderer.render(scene, camera);
         }
 
-        // let hold = [];
 
         function render() {
             for (let i = 0; i < trees.length; i++) {
@@ -977,7 +951,7 @@
             const lightTrees = raycaster.intersectObjects(trees, true);
             intersection = (intersections.length) > 0 ? intersections[0] : null;
             if (toggle > 0.001 && intersection !== null) {
-                spheres[spheresIndex].position.copy(intersection.point);
+                spheres[0].position.copy(intersection.point);
                 toggle = 0;
             }
 
@@ -1039,11 +1013,8 @@
                 renderer.setSize(windowWidth, windowHeight);
             }
         }
-        let collisionRayCaster = new THREE.Raycaster();
 
-        var movement;
         function onDocumentKeyDown(e) {
-
             movement = 0;
             var keyCode = e.which || e.keyCode;
             if (keyCode == 87) movement = "forward";
@@ -1053,9 +1024,7 @@
             if (movement != 0) moveAround();
         }
 
-        var oldCamera;
-        let speed = 2;
-        let hit = false;
+
 
         function moveAround() {
             moving = true;
@@ -1064,15 +1033,12 @@
             if (movement == "left") camera.translateX(-speed);
             if (movement == "backward") camera.translateZ(speed);
             if (movement == "right") camera.translateX(speed);
-            // collisionRayCaster.set(camera.position, oldCamera.position.normalize());
 
             for (let t = 0; t < trees.length; t++) {
                 if (calcPointDistance(camera.position, trees[t].position) <= 2) {
-                    //  console.log(calcPointDistance(camera.position, trees[t].position));
                     hit = true;
                 }
             }
-            //collisionRayCaster.intersectObjects(trees).length > 0 ||
             if (hit == true) {
                 console.log("gets into collision");
                 if (movement == "forward") camera.translateZ(speed);
@@ -1094,6 +1060,19 @@
         document.addEventListener('keyup', (event) => {
             moving = false;
         });
+
+
+
+
+
+        initCursor();
+        initWorld();
+        createLandAndWater();
+        createCelestials();
+
+        makeTrees();
+        makeBody();
+        scene.add(group);
 
         animate();
         render();
