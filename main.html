@@ -795,9 +795,9 @@
             change += .2;
             sinwave = Math.sin(change);
 
+            //Creates raycaster 
             let ray = new THREE.Raycaster();
             var rayPos = new THREE.Vector3();
-
             rayPos.set(camera.position.x, camera.position.y, camera.position.z);
             var rayDir = new THREE.Vector3(0, -1, 0);
             ray.set(rayPos, rayDir);
@@ -894,36 +894,44 @@
             }
         }
 
+       //A function which determines which way the user is moving
         function onDocumentKeyDown(e) {
             movement = 0;
-            var keyCode = e.which || e.keyCode;
+            var keyCode = e.which || e.keyCode; //Gets the key code
+            //Sets the direction the user is moving based on which key the user pressed
             if (keyCode == 87) movement = "forward";
             else if (keyCode == 65) movement = "left";
             else if (keyCode == 68) movement = "right";
             else if (keyCode == 83) movement = "backward";
-            if (movement != 0) moveAround();
+            if (movement != 0) moveAround(); //If the user is moving then call the moveAround function
         }
 
+        //Function which moves the user & handles collision
         function moveAround() {
-            moving = true;
-            oldCamera = camera.clone();
-            if (movement == "forward") camera.translateZ(-speed);
+            moving = true; //Sets the boolean whether the user was moving or not to true
+            oldCamera = camera.clone(); //Create a clone of the camera
+            //Translates the user using a specific speed based on which movement has been triggered
+            if (movement == "forward") camera.translateZ(-speed); 
             if (movement == "left") camera.translateX(-speed);
             if (movement == "backward") camera.translateZ(speed);
             if (movement == "right") camera.translateX(speed);
 
-            for (let t = 0; t < trees.length; t++) {
-                if (calcPointDistance(camera.position, trees[t].position) <= 2) {
-                    hit = true;
+            for (let t = 0; t < trees.length; t++) { //For the length of the array containing all of the trees
+                if (calcPointDistance(camera.position, trees[t].position) <= 2) { //Calcs whether the camera and a
+                    //certain tree are too close together
+                    hit = true; //Sets boolean "hit" to true
                 }
             }
-            if (hit == true) {
+            //Src: https://github.com/TovAqulic/threejs_collision_issue
+            if (hit == true) { //If the user has collided with a tree then move the user in the opposite direction that
+                //the tree they collided wiht is in
                 if (movement == "forward") camera.translateZ(speed);
                 if (movement == "left") camera.translateX(speed);
                 if (movement == "backward") camera.translateZ(-speed);
                 if (movement == "right") camera.translateX(-speed);
-                hit = false;
+                hit = false; //Sets the "hit" boolean to false
             }
+            //If the user is out of bounds then move them in the opposite direction of the way they are trying to walk
             else if (camera.position.x < -380 || camera.position.x > 380 || camera.position.z < -380 || camera.position.z > 380) {
                 if (movement == "forward") camera.translateZ(speed);
                 if (movement == "left") camera.translateX(speed);
@@ -932,8 +940,10 @@
 
             }
         };
-        document.addEventListener('keydown', onDocumentKeyDown, false);
 
+        document.addEventListener('keydown', onDocumentKeyDown, false); //Adds key handler to the document
+
+        //If the user has not pressed any keys then the boolean determining whether the user is moving should be turned to false
         document.addEventListener('keyup', (event) => {
             moving = false;
         });
