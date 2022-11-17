@@ -7,7 +7,6 @@
 <body>
     <canvas id="myCanvas" width="800" height="800"></canvas>
     <script src="Perlin.js"></script>
-    <script src="TreeBuilder.js"></script>
     <script type="module">
         import * as THREE from "http://cs.merrimack.edu/~stuetzlec/three.js-master/build/three.module.js";
         import { PointerLockControls } from 'http://cs.merrimack.edu/~stuetzlec/three.js-master/examples/jsm/controls/PointerLockControls.js';
@@ -175,6 +174,7 @@
         // scene.add(waterShadow);
 
 
+        //src: http://www.stephanbaker.com/post/perlinterrain/
         var perlin = new Perlin();
         var peak = 60;
         var smoothing = 300;
@@ -208,7 +208,7 @@
 
 
 
-
+        //src: https://github.com/NekoStark/lsystem-threejs-unifi
         function TreeBuilder(string, params, texture) {
             this.string = string;
             this.params = params;
@@ -308,6 +308,7 @@
 
         }
 
+        //src: https://github.com/NekoStark/lsystem-threejs-unifi
         function buildBranch(state, material) {
             var transform = new THREE.Quaternion();
             transform.multiply(state.rotation);
@@ -327,6 +328,7 @@
 
         }
 
+        //src: https://github.com/NekoStark/lsystem-threejs-unifi
         function buildLeaf(state, material, form) {
             var transform = new THREE.Quaternion();
             transform.multiply(state.rotation);
@@ -352,6 +354,7 @@
             return branch;
         }
 
+        //src: https://github.com/NekoStark/lsystem-threejs-unifi
         function cloneState(state) {
             return {
                 bRadius: state.bRadius,
@@ -363,7 +366,7 @@
             }
         }
 
-
+        //src: https://github.com/NekoStark/lsystem-threejs-unifi
         function Params(axiom, iterations, delta, branchLength,
             branchRadius, branchReduction, branchMinRadius) {
             this.axiom = axiom ? axiom : "F";
@@ -375,43 +378,7 @@
             this.branchMinRadius = branchMinRadius ? branchMinRadius : 0.1;
         }
 
-
-        function selectPreset() {
-            var preset = $("#preset").val();
-            if (preset == "Example A") {
-                params = new Params("F", 5, 20, 4, 0.2);
-                rules = "F=F[+F]F[-F][F]";
-            }
-            if (preset == "Example B") {
-                params = new Params("F", 5, 25.7, 5, 1, 0.2, 0.2);
-                rules = "F=F[+F]F[-F]F";
-            }
-            if (preset == "Example C") {
-                params = new Params("F", 4, 22.5, 4, 0.1);
-                rules = "F=FF-[-F+F+F]+[+F-F-F]";
-            }
-            if (preset == "Example D") {
-                params = new Params("X", 7, 20);
-                rules = "X=F[+X]F[-X]+X\nF=FF";
-            }
-            if (preset == "Example E") {
-                params = new Params("X", 7, 25.7);
-                rules = "X=F[+X][-X]FX\nF=FF";
-            }
-            if (preset == "Example F") {
-                params = new Params("X", 5, 22.5);
-                rules = "X=F-[[X]+X]+F[+FX]-X\nF=FF";
-            }
-            if (preset == "Example G") {
-                params = new Params("FFFFFA", 4, 25);
-                rules = "A=F[++A]X[--A]^^^A";
-            }
-            if (preset == "Example S") {
-                params = new Params("F", 5, 25, 3, 0.3);
-                rules = "F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F";
-            }
-        }
-
+        //src: https://github.com/NekoStark/lsystem-threejs-unifi
         function parseRules(rules) {
             var result = {};
             rules.split("\n").forEach(function (a) {
@@ -425,7 +392,7 @@
             return result;
         }
 
-
+        //src: https://github.com/NekoStark/lsystem-threejs-unifi
         function Rewriter(rules) {
             this.rules = rules;
 
@@ -449,6 +416,7 @@
 
         }
 
+        //src: https://github.com/NekoStark/lsystem-threejs-unifi
         function getRule(rules) {
             var probability = rules.length;
             var choice = probability > 1 ?
@@ -456,58 +424,6 @@
 
             return rules[choice];
         }
-
-
-        //let rules = "F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F";
-
-        // old params: "F", 5, 25, 3, 0.3
-
-
-        // let rules = parseRules("F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F");
-        // let params = new Params("F", 5, 25, 4, 0.6);
-        // var rewriter = new Rewriter(rules);
-        // var string = rewriter.rewrite(params);
-        // //console.log(string)
-        // let newTree = new TreeBuilder(string, params).build();
-        // let secondHalf = new TreeBuilder(string, params).build();
-
-        // console.log(secondHalf.rotation);
-        // secondHalf.rotation.y = 90;
-        // scene.add(secondHalf);
-
-
-
-        //let params = new Params("F", 5, 25, 3, 0.3);
-        //let string = "F=F[+F]F[-F]F\nF=F[+F]F\nF=F[-F]F";
-        //let newTree = new TreeBuilder(string, params).build();
-        // scene.add(newTree);
-        // console.log(newTree);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         function rotateAboutWorldAxis(object, axis, angle) {
@@ -600,6 +516,17 @@
             return distance; //Returns distance
         }
 
+        //src:https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
+        function calcPointDistance(point, point2) {
+            //This calculates the distance of two points based on the distance formula
+            const distance = Math.sqrt(
+                (point.x - point2.x) * (point.x - point2.x) +
+                (point.y - point2.y) * (point.y - point.y) +
+                (point.z - point2.z) * (point.z - point2.z)
+            )
+            return distance; //Returns distance
+        }
+
         function randomizePositions() {
 
 
@@ -611,9 +538,13 @@
             var treePos = new THREE.Vector3();
 
 
-            let xPos = Math.random() * 380;
+           // let xPos = Math.random() * 380;
+            let xPos = Math.random() * (380 - 5) + 5;
+
             let yPos = 100;
-            let zPos = Math.random() * 380;
+
+            //let zPos = Math.random() * 380;
+            let zPos = Math.random() * (380 - 5) + 5;
             if (random() == true) {
                 xPos *= -1;
 
@@ -833,19 +764,19 @@
         // collision.push(test2);
         // collision.push(cube);
 
-        //Function which detects whether the camera has collided with an object and then provides
-        //some functionality to show that the collision was dealt with
-        // function collisionDetection(point, shape) {
-        //     let distance = calcDistance(point, shape); //Calculates the distance between the camera's position
-        //     //and an object
-        //     if (distance < shape.geometry.boundingSphere.radius) { //If the distance or camera is within the objects
-        //         console.log("HELLER");
-        //         return true;
-        //     }
-        //     else {
-        //         return false;
-        //     }
-        // }
+        // Function which detects whether the camera has collided with an object and then provides
+        // some functionality to show that the collision was dealt with
+        function collisionDetection(point, shape) {
+            let distance = calcDistance(point, shape); //Calculates the distance between the camera's position
+            //and an object
+            if (distance < shape.geometry.boundingSphere.radius) { //If the distance or camera is within the objects
+                console.log("HELLER");
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
         let group = new THREE.Group();
 
 
@@ -982,11 +913,9 @@
         // let hold = [];
 
         function render() {
-
-
             for (let i = 0; i < trees.length; i++) {
                 for (let n = 0; n < trees[i].children.length; n++) {
-                    trees[i].children[n].material.emissive.setHex(0x000000);
+                    trees[i].children[n].material.emissive.setHex(0x000000);          
                 }
             }
 
@@ -1013,7 +942,7 @@
                 for (let i = 0; i < trees.length; i++) {
                     for (let n = 0; n < trees[i].children.length; n++) {
                         if (trees[i].children[n].id == lightTrees[0].object.id) {
-                            console.log("found it");
+                            //console.log("found it");
                             indexT = i;
                         }
                     }
@@ -1021,7 +950,6 @@
                 for (let g = 0; g < trees[indexT].children.length; g++) {
                     //  hold.push(trees[indexT].children[g]);
                     trees[indexT].children[g].material.emissive.setHex(0xECDBEF);
-
                 }
                 // lightTrees[0].object.material.emissive.setHex(0xff0000);
                 //   console.log(lightTrees[0], 'light');
@@ -1052,6 +980,7 @@
             previousTime = time;
             renderer.render(scene, camera);
         }
+       
         //source: https://threejs.org/examples/webgl_multiple_views.html
         //This function updates the window width and height variables to the actual width and height of the computer
         //regardless of whether the console has been opened or not
@@ -1079,6 +1008,7 @@
 
         var oldCamera;
         let speed = 2;
+        let hit = false;
 
         function moveAround() {
             moving = true;
@@ -1087,21 +1017,29 @@
             if (movement == "left") camera.translateX(-speed);
             if (movement == "backward") camera.translateZ(speed);
             if (movement == "right") camera.translateX(speed);
-            collisionRayCaster.set(camera.position, oldCamera.position.normalize());
+           // collisionRayCaster.set(camera.position, oldCamera.position.normalize());
 
-            if (collisionRayCaster.intersectObjects(trees).length > 0) {
-                console.log("does it get in");
-
+            for (let t = 0; t < trees.length; t++){
+                if(calcPointDistance(camera.position, trees[t].position) <= 2){
+                    //  console.log(calcPointDistance(camera.position, trees[t].position));
+                        hit = true;
+                    }  
+            }
+            //collisionRayCaster.intersectObjects(trees).length > 0 ||
+            if ( hit == true) {
+                console.log("gets into collision");
                 if (movement == "forward") camera.translateZ(speed);
                 if (movement == "left") camera.translateX(speed);
                 if (movement == "backward") camera.translateZ(-speed);
                 if (movement == "right") camera.translateX(-speed);
+                hit = false;
             }
             else if (camera.position.x < -380 || camera.position.x > 380 || camera.position.z < -380 || camera.position.z > 380) {
                 if (movement == "forward") camera.translateZ(speed);
                 if (movement == "left") camera.translateX(speed);
                 if (movement == "backward") camera.translateZ(-speed);
                 if (movement == "right") camera.translateX(-speed);
+                
             }
         };
         document.addEventListener('keydown', onDocumentKeyDown, false);
