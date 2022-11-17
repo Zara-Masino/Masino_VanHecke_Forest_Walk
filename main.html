@@ -247,13 +247,16 @@
 
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
+        // a function that creates a tree
         function TreeBuilder(string, params, texture) {
+            // the characteristics of the tree
             this.string = string;
             this.params = params;
             this.texture = texture;
 
+            //build the tree
             this.build = function () {
-                //init params
+                //init params for the tree
                 var state = {
                     bRadius: this.params.branchRadius,
                     bLength: this.params.branchLength,
@@ -262,34 +265,49 @@
                     position: new THREE.Vector3(0, 0, 0),
                     rotation: new THREE.Quaternion()
                 }
+                // the stack used to keep track of where elements go 
                 var stateStack = [];
 
-                //init object
+                //set the materials properites for the branches and leaves
                 var tree = new THREE.Object3D();
-                //var textureLoader = new THREE.TextureLoader();
                 var branchMaterial = this.texture;
-                var appleMaterial = new THREE.MeshPhongMaterial({ color: 0x90EE90, map: loader.load("land/leaf2.jpg") });
-                appleMaterial.transparent = true;
-                appleMaterial.opacity = .8;
-                // var branchMaterial = new THREE.MeshBasicMaterial({ color: 'brown', map: textureLoader.load("textures/branch.jpg") });
-                // var appleMaterial = new THREE.MeshBasicMaterial({ color: 'red', map: textureLoader.load("textures/apple.jpg") });
+                var leafMaterial = new THREE.MeshPhongMaterial({ color: 0x90EE90, map: loader.load("land/leaf2.jpg") });
+                leafMaterial.transparent = true;
+                leafMaterial.opacity = .8;
+
+                // create a random number to determine if the tree has leaves or not and what shape leaf it will be
                 let random = Math.random();
+                // for the length of the grammar string
                 for (var i = 0; i < this.string.length; i++) {
+                    // get the character and create a random number
                     var char = this.string.charAt(i);
                     let rand = Math.random();
-                    //console.log(rand);
+                    // if the character is F, build 0, 1, or 2 branches depending on rand
                     if (char == "F") {
-                        tree.add(buildBranch(state, branchMaterial));
+                        if(rand < .75){
+                            tree.add(buildBranch(state, branchMaterial));
+                        }
+                        else if (rand >.95){
+                            tree.add(buildBranch(state, branchMaterial));
+                            tree.add(buildBranch(state, branchMaterial));
+                        }
                     }
+                    // reassign rand
+                    rand = Math.random();
+                    // if the character is X, build a leaf depending on random
                     if (char == "X") {
                         if (random < .33) {
-                            tree.add(buildLeaf(state, appleMaterial, 0));
+                            tree.add(buildLeaf(state, leafMaterial, 0));
                         }
                         else if (random > .66) {
-                            tree.add(buildLeaf(state, appleMaterial, 1));
+                            tree.add(buildLeaf(state, leafMaterial, 1));
                         }
 
                     }
+                    //reassign rand
+                    rand = Math.random();
+                    // for the z axis
+                    // if the character is +, rotate the branch 180 or -180 degrees depending on rand
                     if (char == "+") {
                         if (rand > .5) {
                             state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), this.params.delta * Math.PI / 180));
@@ -298,12 +316,10 @@
                             state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -this.params.delta * Math.PI / 180));
                         }
                     }
-                    // if (char == "-") {
-                    //     if (rand > .5) {
-                    //         state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -this.params.delta * Math.PI / 180));
-                    //     }
-                    // }
+                    // reassign rand
                     rand = Math.random();
+                    // for the y axis
+                    // if the character is >, rotate the branch 180 or -180 degrees depending on rand
                     if (char == ">") {
                         if (rand > .5) {
                             state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -this.params.delta * Math.PI / 180));
@@ -312,12 +328,10 @@
                             state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.params.delta * Math.PI / 180));
                         }
                     }
-                    // if (char == "^") {
-                    //     if (rand > .5) {
-                    //         state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.params.delta * Math.PI / 180));
-                    //     }
-                    // }
+                    // reassing rand
                     rand = Math.random();
+                    // for the x axis
+                    // if the character is <, rotate the branch 180 or -180 degrees depending on rand
                     if (char == "<") {
                         if (rand > .5) {
                             state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -this.params.delta * Math.PI / 180));
@@ -326,11 +340,7 @@
                             state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), this.params.delta * Math.PI / 180));
                         }
                     }
-                    // if (char == ">") {
-                    //     if (rand > .5) {
-                    //         state.rotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), this.params.delta * Math.PI / 180));
-                    //     }
-                    // }
+                    // if the characters are [ or ], pop or push a clone of the state respectively 
                     if (char == "[") {
                         stateStack.push(cloneState(state));
                         state.bRadius = (state.bRadius - state.bReduction) > state.bMinRadius ? (state.bRadius - state.bReduction) : state.bRadius;
@@ -340,41 +350,57 @@
                     }
 
                 }
+                // turn on shadows for the tree
                 tree.castShadow = true;
+                // return the tree
                 return tree;
             }
 
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
+        // a function that builds a branch 
         function buildBranch(state, material) {
+            // set the rotation to state rotation
             var transform = new THREE.Quaternion();
             transform.multiply(state.rotation);
 
+            // set the position to be appropriate for the tree
             var position = new THREE.Vector3(0.0, state.bLength / 2, 0.0);
+            // apply the rotation of the state
             position.applyQuaternion(state.rotation);
+            // add the branch position to the tree position
             state.position.add(position);
 
+            // create the branch geometry and mesh
             var geometry = new THREE.CylinderBufferGeometry(state.bRadius, state.bRadius, state.bLength, 16);
             var branch = new THREE.Mesh(geometry, material);
+            // copy the rotation and position of the state
             branch.quaternion.copy(state.rotation);
             branch.position.copy(state.position);
 
+            // add the position to the state
             state.position.add(position);
+            //turn on shadows for the branch
             branch.castShadow = true;
+            //return the branch
             return branch;
 
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
+        // a function that creates a leaf
         function buildLeaf(state, material, form) {
+            // set the rotation using the state rotation
             var transform = new THREE.Quaternion();
             transform.multiply(state.rotation);
 
+            // find the position for the leaf
             var originalPosition = new THREE.Vector3().copy(state.position);
             var position = new THREE.Vector3(0, state.bLength / 8, 0.0);
             position.applyQuaternion(state.rotation);
             state.position.add(position);
+            // if the form is 1, make a sphere, if not, make a dodecahedron
             if (form == 1) {
                 var geometry = new THREE.SphereBufferGeometry(state.bLength / .9, 16);
 
@@ -382,18 +408,20 @@
             else {
                 var geometry = new THREE.DodecahedronGeometry(20.01, 0)
             }
-            //var geometry = new THREE.SphereBufferGeometry(state.bLength / .9, 16);
+            // make the mesh and set the position and roatation
             var branch = new THREE.Mesh(geometry, material);
             branch.quaternion.copy(state.rotation);
             branch.position.copy(state.position);
-
             state.position = new THREE.Vector3().copy(originalPosition);
+            // turn on shadows and return the branch
             branch.castShadow = true;
             return branch;
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
+        // a method that clones the current state
         function cloneState(state) {
+            // return the clone
             return {
                 bRadius: state.bRadius,
                 bLength: state.bLength,
@@ -405,6 +433,7 @@
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
+        // a method that creates parameters for a tree
         function Params(axiom, iterations, delta, branchLength,
             branchRadius, branchReduction, branchMinRadius) {
             this.axiom = axiom ? axiom : "F";
@@ -417,49 +446,66 @@
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
+        // a method that reads through the rules and reformats them for use
         function parseRules(rules) {
             var result = {};
+            // split on the new line
             rules.split("\n").forEach(function (a) {
+                // for each line, split at the = sign
                 var line = a.split("=");
+                // if the result is not the first thing in line
                 if (!result[line[0]]) {
+                    // empty out result at that index
                     result[line[0]] = [];
                 }
+                // push the line to result
                 result[line[0]].push(line[1])
             });
-
+            // return the result
             return result;
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
+        // a method that rewrties the rules
         function Rewriter(rules) {
             this.rules = rules;
 
             this.rewrite = function (params) {
+                // get the axiom of the params
                 var result = params.axiom;
+                // for each param
                 for (var i = 0; i < params.iterations; i++) {
                     var localResult = "";
+                    // for each axiom
                     for (var j = 0; j < result.length; j++) {
+                        // get that character and set it to the rule of that character
                         var char = result.charAt(j);
                         var rule = this.rules[char];
+                        // if the rule is undefined, add the result of getrule 
                         if (rule !== undefined) {
                             localResult += getRule(rule);
+                            // else add the character
                         } else {
                             localResult += char;
                         }
                     }
+                    // set result to localresult
                     result = localResult;
                 }
+                //return result
                 return result;
             };
 
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
+        // a method that chooses which portion of the rule to use based on probability
         function getRule(rules) {
             var probability = rules.length;
             var choice = probability > 1 ?
                 parseInt((((Math.random() * probability) + 1) * 1000) / 1000) - 1 : 0;
 
+            // return which rule to use
             return rules[choice];
         }
 
