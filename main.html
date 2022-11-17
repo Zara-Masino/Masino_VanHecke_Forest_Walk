@@ -14,15 +14,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
         let treePositions = [];
         var scene = new THREE.Scene();
         let raycaster = new THREE.Raycaster();
@@ -41,7 +32,7 @@
         let intersection = null;
         let toggle = 0;
         let clock = new THREE.Clock();
-        let turnSpeed = .1;
+        let turnSpeed = .2;
 
 
         let prevTime = performance.now();
@@ -87,11 +78,15 @@
         scene.add(cursor);
         spheres.push(cursor);
 
-        var world = new THREE.BoxGeometry(900, 900, 900);
-        var wmat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false, side: THREE.DoubleSide });
+        var world = new THREE.SphereGeometry(550, 32, 32);
+        var wmat = new THREE.MeshBasicMaterial({ color: 0xADD8E6, wireframe: false, side: THREE.DoubleSide, map: loader.load("land/cloud3.jpg") });
         /* Cause the material to be visible for inside and outside */
+        
+        wmat.transparent = true;
+        wmat.opacity = .5;
         wmat.side = THREE.BackSide;
         var cube = new THREE.Mesh(world, wmat);
+        cube.rotateZ(1.4708);
         scene.add(cube);
         worldItems.push(cube);
 
@@ -120,8 +115,8 @@
             scene.add(this.bulbLight); //Adds bulb light to the scene
         }
 
-        let moon = new makeLights(moonColor[0], -255, -255, 0, .1);
-        let sun = new makeLights(sunColors[4], 255, 255, 0, 1);
+        let moon = new makeLights(moonColor[0], -280, -280, 0, .1);
+        let sun = new makeLights(sunColors[4], 280, 280, 0, 1);
         worldItems.push(sun.bulbLight);
         worldItems.push(moon.bulbLight);
 
@@ -130,11 +125,15 @@
 
 
         var waterGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
-        var waterMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/water4.jpg') });
+        var waterMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff ,map: loader.load('land/water4.jpg') , side: THREE.DoubleSide});
+        waterMat.opacity = .7;
+        waterMat.transparent = true;
         var water = new THREE.Mesh(waterGeom, waterMat);
+      
+    
         water.rotation.x = -Math.PI / 2;
         water.position.y = -25;
-        //water.receiveShadow = true;
+        water.receiveShadow = true;
         scene.add(water);
         worldItems.push(water);
 
@@ -166,18 +165,18 @@
         scene.add(terrainShadow);
 
 
-        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
-        let waterShadowMat = new THREE.ShadowMaterial();
-        waterShadowMat.opacity = 0.5;
-        var waterShadow = new THREE.Mesh(waterGeom, waterShadowMat);
-        waterShadow.receiveShadow = true;
-        waterShadow.position.copy(water.position);
-        waterShadow.rotation.copy(water.rotation);
-        scene.add(waterShadow);
+        // makes shadows not completely opaque. but the plane itself does not receive/cast shadow
+        // let waterShadowMat = new THREE.ShadowMaterial();
+        // waterShadowMat.opacity = 0.5;
+        // var waterShadow = new THREE.Mesh(waterGeom, waterShadowMat);
+        // waterShadow.receiveShadow = true;
+        // waterShadow.position.copy(water.position);
+        // waterShadow.rotation.copy(water.rotation);
+        // scene.add(waterShadow);
 
 
         var perlin = new Perlin();
-        var peak = 30;
+        var peak = 60;
         var smoothing = 300;
         var vertices = terrain.geometry.attributes.position.array;
         for (var i = 0; i <= vertices.length; i += 3) {
@@ -231,12 +230,12 @@
                 var tree = new THREE.Object3D();
                 //var textureLoader = new THREE.TextureLoader();
                 var branchMaterial = this.texture;
-                var appleMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+                var appleMaterial = new THREE.MeshPhongMaterial({ color: 0x90EE90, map: loader.load("land/leaf2.jpg") });
                 appleMaterial.transparent = true;
-                appleMaterial.opacity = .7;
+                appleMaterial.opacity = .8;
                 // var branchMaterial = new THREE.MeshBasicMaterial({ color: 'brown', map: textureLoader.load("textures/branch.jpg") });
                 // var appleMaterial = new THREE.MeshBasicMaterial({ color: 'red', map: textureLoader.load("textures/apple.jpg") });
-
+                let random = Math.random();
                 for (var i = 0; i < this.string.length; i++) {
                     var char = this.string.charAt(i);
                     let rand = Math.random();
@@ -245,7 +244,13 @@
                         tree.add(buildBranch(state, branchMaterial));
                     }
                     if (char == "X") {
-                        tree.add(buildLeaf(state, appleMaterial));
+                        if (random < .33) {
+                            tree.add(buildLeaf(state, appleMaterial, 0));
+                        }
+                        else if (random>.66) {
+                            tree.add(buildLeaf(state, appleMaterial, 1));
+                        }
+
                     }
                     if (char == "+") {
                         if (rand > .5) {
@@ -322,7 +327,7 @@
 
         }
 
-        function buildLeaf(state, material) {
+        function buildLeaf(state, material, form) {
             var transform = new THREE.Quaternion();
             transform.multiply(state.rotation);
 
@@ -330,8 +335,14 @@
             var position = new THREE.Vector3(0, state.bLength / 8, 0.0);
             position.applyQuaternion(state.rotation);
             state.position.add(position);
-
-            var geometry = new THREE.SphereBufferGeometry(state.bLength / .9, 16);
+            if (form == 1) {
+                var geometry = new THREE.SphereBufferGeometry(state.bLength / .9, 16);
+               
+            }
+            else {
+                var geometry = new THREE.DodecahedronGeometry(20.01, 0)
+            }
+          //var geometry = new THREE.SphereBufferGeometry(state.bLength / .9, 16);
             var branch = new THREE.Mesh(geometry, material);
             branch.quaternion.copy(state.rotation);
             branch.position.copy(state.position);
@@ -667,14 +678,15 @@
         function makeTrees() {
 
             for (let i = 0; i < 10; i++) {
-                var birch = new THREE.MeshPhongMaterial({ color: 0xFFFFFF, map: loader.load("land/birch1.jpg") });
+                var oakwood = new THREE.MeshPhongMaterial({ color: 0x80471C, map: loader.load("land/oakwood.jpg") });
+               
                 let params = new Params("F", 2, 22.5, 25, 2);
-                let rules = parseRules("F=F[+F]F[F>>][<F]\nF=F[+F]F[+<<F][F>]");
+                let rules = parseRules("F=F[+F]F[F>>][<FX]\nF=F[+F]F[+<<F][F>X]");
                 var rewriter = new Rewriter(rules);
                 var string = rewriter.rewrite(params);
                 let positionTree = randomizePositions();
                 //console.log(string);
-                let newTree = new TreeBuilder(string, params, birch).build();
+                let newTree = new TreeBuilder(string, params, oakwood).build();
                 // console.log(newTree.children[0].geometry);
                 // newTree.children[0].material.emissive.setHex(0xff0000);
                 // for(let j = 0; j < newTree.children.length/2; j++){
@@ -692,7 +704,7 @@
             }
 
             for (let i = 0; i < 10; i++) {
-                var birch = new THREE.MeshPhongMaterial({ color: 0xB00000, map: loader.load("land/redwood.jpg") });
+                var redwood = new THREE.MeshPhongMaterial({ color: 0xB00000, map: loader.load("land/redwood.jpg") });
                 let params = new Params("F", 3, 15, 15, 2);
                 let rules = parseRules("F=F>[<+F]F[+F>]<F\nF=F>[+F^>^]F\nF=F[+F>]F>");
 
@@ -700,7 +712,7 @@
                 var string = rewriter.rewrite(params);
                 let positionTree = randomizePositions();
                 // console.log(string);
-                let newTree = new TreeBuilder(string, params, birch).build();
+                let newTree = new TreeBuilder(string, params, redwood).build();
                 // console.log(newTree.children[0].geometry);
                 // newTree.children[0].material.emissive.setHex(0xff0000);
                 // for(let j = 0; j < newTree.children.length/2; j++){
@@ -718,7 +730,7 @@
             }
 
             for (let i = 0; i < 10; i++) {
-                var birch = new THREE.MeshPhongMaterial({ color: 0x80471C, map: loader.load("land/oakwood.jpg") });
+                var birch = new THREE.MeshPhongMaterial({ color: 0xFFFFFF, map: loader.load("land/birch1.jpg") });
                 let params = new Params("F", 2, 30, 20, 2);
                 let rules = parseRules("F=F[+F]F[F>>][<FX]\nF=F[+F]F[+<<F][F>X]");
 
@@ -967,16 +979,16 @@
             renderer.render(scene, camera);
         }
 
-       // let hold = [];
+        // let hold = [];
 
         function render() {
 
 
             for (let i = 0; i < trees.length; i++) {
-                    for (let n = 0; n < trees[i].children.length; n++) {
-                        trees[i].children[n].material.emissive.setHex(0x000000);
-                    }
+                for (let n = 0; n < trees[i].children.length; n++) {
+                    trees[i].children[n].material.emissive.setHex(0x000000);
                 }
+            }
 
             // for (let m = 0; m < hold.length; m++) {
             //     //  console.log(trees[m], " BITCH");
@@ -1007,8 +1019,8 @@
                     }
                 }
                 for (let g = 0; g < trees[indexT].children.length; g++) {
-                  //  hold.push(trees[indexT].children[g]);
-                    trees[indexT].children[g].material.emissive.setHex(0xff0000)
+                    //  hold.push(trees[indexT].children[g]);
+                    trees[indexT].children[g].material.emissive.setHex(0xECDBEF);
 
                 }
                 // lightTrees[0].object.material.emissive.setHex(0xff0000);
