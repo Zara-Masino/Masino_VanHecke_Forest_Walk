@@ -8,141 +8,199 @@
     <canvas id="myCanvas" width="800" height="800"></canvas>
     <script src="Perlin.js"></script>
     <script type="module">
+
+        //Imports
         import * as THREE from "http://cs.merrimack.edu/~stuetzlec/three.js-master/build/three.module.js";
         import { PointerLockControls } from 'http://cs.merrimack.edu/~stuetzlec/three.js-master/examples/jsm/controls/PointerLockControls.js';
 
 
-
-        let treePositions = [];
-        var scene = new THREE.Scene();
-        let raycaster = new THREE.Raycaster();
-
-        let trees = [];
-        let collision = [];
-        let change = 0;
-        let sinwave = 0;
-        let displacement = 0;
-        let moving = false;
-
-
-        const spheres = [];
-        const spheresIndex = 0;
-        let worldItems = [];
-        let intersection = null;
-        let toggle = 0;
-        let clock = new THREE.Clock();
-        let turnSpeed = .2;
-
-
-        let prevTime = performance.now();
-
-
-        let sunColors = [0xf7e2ba, 0xffdaa8, 0xf8cb7c, 0xfdb25b, 0xfa9e4d];
-        let moonColor = [0xdde2e5];
-        let skyColors = [0x000608, 0x072f41, 0x094f6d, 0x436e91, 0x5e88b8, 0x7998bb];
+        //Variable Declaration
+        let scene = new THREE.Scene();
         let windowWidth = window.innerWidth;
         let windowHeight = window.innerHeight;
-        let yheight;
-
-        const loader = new THREE.TextureLoader();
-        //var birch = new THREE.MeshPhongMaterial({ map: loader.load("land/birch1.jpg") });
-
         var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
         camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0));
         camera.position.set(0, 80, 10);
         scene.add(camera);
 
-        let previousTime = performance.now();
+        let raycaster = new THREE.Raycaster();
+        let collision = [];
+        let trees = [];
 
-        var renderer = new THREE.WebGLRenderer({ canvas: myCanvas, antialias: true });
-        renderer.setClearColor(0xADD8E6);
-        // If you want this to span the window, instead of using the myCanvas object, use the window object
-        renderer.setPixelRatio(document.getElementById('myCanvas').devicePixelRatio);
-        // If you want the render to span the window, uncomment this
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        //        renderer.shadowMap.type = THREE.BasicShadowMap;
-        renderer.shadowMapSoft = true;
+
+
+        let worldGeom;
+        let worldMat;
+        let world;
+        let waterGeom;
+        let waterMat;
+        //  let waterMatBack;
+        let water;
+        let terrainGeom;
+        let terrainMat;
+        let terrain;
+
+        let terrainShadowMat;
+        let terrainShadow;
+
+        let cursorGeom;
+        let cursorMat;
+        let cursor;
+
+        let change = 0;
+        let sinwave = 0;
+        let displacement = 0;
+        let moving = false;
+
+        let clock = new THREE.Clock();
+        let turnSpeed = .2;
+
+        let spheres = [];
+        let spheresIndex = 0;
+        let worldItems = [];
+        let intersection = null;
+        let toggle = 0;
+
+        let prevTime = performance.now();
+
+        //Colors for sky/sun/moon
+        let sunColors = [0xf7e2ba, 0xffdaa8, 0xf8cb7c, 0xfdb25b, 0xfa9e4d];
+        let moonColor = [0xdde2e5];
+        let skyColors = [0x000608, 0x072f41, 0x094f6d, 0x436e91, 0x5e88b8, 0x7998bb];
+
+        let yheight;
+
+        let loader = new THREE.TextureLoader(); //Texture loader
+
+
+        let previousTime = performance.now(); //Gets current Delta time
+
+        let renderer = new THREE.WebGLRenderer({ canvas: myCanvas, antialias: true });
+        renderer.setClearColor(0xADD8E6);//Sets color of renderer
+        renderer.setPixelRatio(document.getElementById('myCanvas').devicePixelRatio); //Sets renderer to the canvas
+        renderer.setSize(window.innerWidth, window.innerHeight); //Specifies how much of screen will be rendererd
+
+        renderer.shadowMap.enabled = true; //Enables shadow map
+        renderer.shadowMapSoft = true; //Specifies type of shadow
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        var controls = new PointerLockControls(camera, document.body);
+        let controls = new PointerLockControls(camera, document.body); //Enables pointerlock controls
         document.addEventListener('click', function () {
-            controls.lock();
+            controls.lock(); //Locks pointerlock controls upon the user clicking
         });
 
 
-        const cursorGeom = new THREE.SphereGeometry(0.02, 16, 16);
-        const cursorMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const cursor = new THREE.Mesh(cursorGeom, cursorMat);
-        scene.add(cursor);
-        spheres.push(cursor);
+        //Initializes Cursor
+        function initCursor() {
+            cursorGeom = new THREE.SphereGeometry(0.02, 16, 16); //Creates a cursor geom
+            cursorMat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); //Cursor material with color
+            cursor = new THREE.Mesh(cursorGeom, cursorMat); //Creates mesh
+            scene.add(cursor); //Adds cursor to the scene
+            spheres.push(cursor); //Adds cursor to the spheres array
+        }
 
-        var world = new THREE.SphereGeometry(550, 32, 32);
-        var wmat = new THREE.MeshBasicMaterial({ color: 0xADD8E6, wireframe: false, side: THREE.DoubleSide, map: loader.load("land/cloud3.jpg") });
-        /* Cause the material to be visible for inside and outside */
-        
-        wmat.transparent = true;
-        wmat.opacity = .5;
-        wmat.side = THREE.BackSide;
-        var cube = new THREE.Mesh(world, wmat);
-        cube.rotateZ(1.4708);
-        scene.add(cube);
-        worldItems.push(cube);
+        //Initializes the sphere surrounding our "world"
+        function initWorld() {
+            worldGeom = new THREE.SphereGeometry(550, 32, 32); //Creates world Geometry (is a sphere)
+            worldMat = new THREE.MeshBasicMaterial({
+                color: 0xADD8E6, //Gives specific color
+                wireframe: false,
+                side: THREE.DoubleSide, //Gives the sphere two sides so it is visible from inside and outside
+                map: loader.load("land/cloud3.jpg")
+            }); //Textures the sphere with clouds
+
+            worldMat.transparent = true; //Makes the world material halfway transparent in order to make the sky look
+            //more realistic
+            worldMat.opacity = .5;
+            world = new THREE.Mesh(worldGeom, worldMat); //Creates world mesh
+            world.rotateZ(1.4708); //Rotates world specific amount to avoid the ""
+            scene.add(world);
+            worldItems.push(world);
+
+        }
+
+      
 
 
+        //Creates the sun/moon and their corresponding point lights
         function makeLights(hexCode, x, y, z, intensity) {
-            //Creates a sphere and pointlight and adds them both to the scene
-            renderer.setClearColor(0x000608);
-            this.bulbGeometry = new THREE.SphereGeometry(10, 32, 16);
+            renderer.setClearColor(0x000608);//Changes the color of the world to teh 
+            //Creates a sphere (sun/moon) and corresponding pointlight and adds them both to the scene
+
+            this.bulbGeometry = new THREE.SphereGeometry(10, 32, 16); //Creates sphere geometry
             this.bulbLight = new THREE.PointLight(hexCode, intensity, 20000); //Creates point light
-            //color of the light being directed
-            this.bulbMat = new THREE.MeshPhongMaterial({ //Creates bulb material for the light
-                emissive: hexCode, //color of the bulb
+
+            this.bulbMat = new THREE.MeshPhongMaterial({ //Creates bulb material for the light and customizes it
+                emissive: hexCode,
                 emissiveIntensity: 1,
                 color: 0xffff00
             });
-            this.bulbLight.add(new THREE.Mesh(this.bulbGeometry, this.bulbMat)); //Adds bulb geometry and bulb light to the point light
-            this.bulbLight.position.set(x, y, z); //Positions the bulblight 
-            this.bulbLight.castShadow = true; //Casts shadow from the bulb light
-            this.bulbLight.shadow.bias = - 0.0005; // reduces self-shadowing on double-sided objects
-            //  this.bulbLight.shadow.bias = - 0.0005; // reduces self-shadowing on double-sided objects
-            this.bulbLight.shadow.radius = 8;
-            this.bulbLight.shadow.mapSize.width = 2048; // You have there 4K no need to go over 2K
-            this.bulbLight.shadow.mapSize.height = 2048; // 
-            // this.bulbLight.shadow.mapSize.width = 2048;
-            // this.bulbLight.shadow.mapSize.height = 2048;
-            scene.add(this.bulbLight); //Adds bulb light to the scene
+
+            this.bulbLight.add(new THREE.Mesh(this.bulbGeometry, this.bulbMat)); //Adds bulb geometry & bulb light to the point light
+            this.bulbLight.position.set(x, y, z); //Positions the light 
+            this.bulbLight.castShadow = true; //Casts shadow from the light
+            this.bulbLight.shadow.bias = - 0.0005; // Reduces self-shadowing on double-sided objects
+            this.bulbLight.shadow.radius = 8; //Increases smoothness of the shadows
+            this.bulbLight.shadow.mapSize.width = 2048; //Increases resolution of shadows
+            this.bulbLight.shadow.mapSize.height = 2048;
+            scene.add(this.bulbLight); //Adds point light to the scene
         }
 
+        //Creates moon and sun and adds those to the worldItems (so that cursor will recognize them)
         let moon = new makeLights(moonColor[0], -280, -280, 0, .1);
         let sun = new makeLights(sunColors[4], 280, 280, 0, 1);
         worldItems.push(sun.bulbLight);
         worldItems.push(moon.bulbLight);
 
 
+        //Creates terrain and water that will appear in the scene
+        function createLandAndWater() {
+
+            waterGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256); //Creates water geom
+            waterMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff, //Sets color to white
+                map: loader.load('land/water4.jpg'), //Loads in water texture
+                side: THREE.DoubleSide//Makes doublesided
+            });
+
+            waterMat.opacity = .7; //Makes the opacity to 70%
+            waterMat.transparent = true;
+            water = new THREE.Mesh(waterGeom, waterMat);//Creates water mesh
+
+            water.rotation.x = -Math.PI / 2; //Rotates water so that it appears on the ground surface
+            water.position.y = -25;//Positions the water so that only some water will appear to the user depending on
+            //how hilly a certain part is
+            water.receiveShadow = true; //Water can receive shadows
+            scene.add(water); //Adds water to scene
+            worldItems.push(water); //Adds water to worldItems so that the cursor will recognize the water and not disappear
+
+            terrainGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256); //Creates terrain geometry
+            terrainMat = new THREE.MeshPhysicalMaterial({
+                map: loader.load('land/sand3.jpg'), //Loads in terrain texture
+                side: THREE.DoubleSide
+            }); //Makes terrain doublesided
+            terrain = new THREE.Mesh(terrainGeom, terrainMat); //Creates terrain mesh
+            terrain.rotation.x = -Math.PI / 2;//Rotates terrain so that it appears on the ground surface
+           
+            scene.add(terrain);
 
 
+            //Makes shadows not completely opaque on the terrain.
+            terrainShadowMat = new THREE.ShadowMaterial(); //Creates shadow material
+            terrainShadowMat.opacity = 0.5; //The terrain shadow is 50% opaque which allows individuals to see the terrain
+            //underneath
+            terrainShadow = new THREE.Mesh(terrainGeom, terrainShadowMat); //Creates shadow mesh
+            terrainShadow.receiveShadow = true;//Shadow mesh receives the shadow
+            terrainShadow.castShadow = true;//Shadow mesh casts shadow
+            terrainShadow.position.copy(terrain.position);//Copies terrains position
+            terrainShadow.rotation.copy(terrain.rotation);//Copies terrains rotation
+            scene.add(terrainShadow);
 
-        var waterGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
-        var waterMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff ,map: loader.load('land/water4.jpg') , side: THREE.DoubleSide});
-        waterMat.opacity = .7;
-        waterMat.transparent = true;
-        var water = new THREE.Mesh(waterGeom, waterMat);
-      
-    
-        water.rotation.x = -Math.PI / 2;
-        water.position.y = -25;
-        water.receiveShadow = true;
-        scene.add(water);
-        worldItems.push(water);
+        }
 
-
-
-        var terrainGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256);
-        var terrainMat = new THREE.MeshPhysicalMaterial({ map: loader.load('land/sand3.jpg'), side: THREE.DoubleSide });
-        var terrain = new THREE.Mesh(terrainGeom, terrainMat);
-        terrain.rotation.x = -Math.PI / 2;
-        scene.add(terrain);
+        initCursor();
+        initWorld();
+        createLandAndWater();
 
 
         var peak = 60;
@@ -154,24 +212,13 @@
         terrain.geometry.computeVertexNormals();
 
 
-        //makes shadows not completely opaque. but the plane itself does not receive/cast shadow
-        let terrainShadowMat = new THREE.ShadowMaterial();
-        terrainShadowMat.opacity = 0.5;
-        var terrainShadow = new THREE.Mesh(terrainGeom, terrainShadowMat);
-        terrainShadow.receiveShadow = true;
-        terrainShadow.position.copy(terrain.position);
-        terrainShadow.rotation.copy(terrain.rotation);
-        scene.add(terrainShadow);
 
 
-        // makes shadows not completely opaque. but the plane itself does not receive/cast shadow
-        // let waterShadowMat = new THREE.ShadowMaterial();
-        // waterShadowMat.opacity = 0.5;
-        // var waterShadow = new THREE.Mesh(waterGeom, waterShadowMat);
-        // waterShadow.receiveShadow = true;
-        // waterShadow.position.copy(water.position);
-        // waterShadow.rotation.copy(water.rotation);
-        // scene.add(waterShadow);
+
+
+
+
+
 
 
         //src: http://www.stephanbaker.com/post/perlinterrain/
@@ -247,7 +294,7 @@
                         if (random < .33) {
                             tree.add(buildLeaf(state, appleMaterial, 0));
                         }
-                        else if (random>.66) {
+                        else if (random > .66) {
                             tree.add(buildLeaf(state, appleMaterial, 1));
                         }
 
@@ -339,12 +386,12 @@
             state.position.add(position);
             if (form == 1) {
                 var geometry = new THREE.SphereBufferGeometry(state.bLength / .9, 16);
-               
+
             }
             else {
                 var geometry = new THREE.DodecahedronGeometry(20.01, 0)
             }
-          //var geometry = new THREE.SphereBufferGeometry(state.bLength / .9, 16);
+            //var geometry = new THREE.SphereBufferGeometry(state.bLength / .9, 16);
             var branch = new THREE.Mesh(geometry, material);
             branch.quaternion.copy(state.rotation);
             branch.position.copy(state.position);
@@ -442,12 +489,12 @@
             let sunMaterial = sun.bulbMat;
             if (moonLight.position.y > 300) {
                 renderer.setClearColor(skyColors[0]);
-                cube.material.color.setHex(skyColors[0]);
+                world.material.color.setHex(skyColors[0]);
                 moonLight.intensity = .8;
             }
             else if (240 <= moonLight.position.y && moonLight.position.y < 300) {
                 renderer.setClearColor(skyColors[1]);
-                cube.material.color.setHex(skyColors[1]);
+                world.material.color.setHex(skyColors[1]);
                 moonLight.intensity = .7;
             }
             else if (180 <= moonLight.position.y && moonLight.position.y < 240) {
@@ -455,7 +502,7 @@
             }
             else if (120 <= moonLight.position.y && moonLight.position.y < 180) {
                 renderer.setClearColor(skyColors[2]);
-                cube.material.color.setHex(skyColors[2]);
+                world.material.color.setHex(skyColors[2]);
                 moonLight.intensity = .5;
             }
             else if (moonLight.position.y < 120 && moonLight.position.y > -.5) {
@@ -467,14 +514,14 @@
             if (sunLight.position.y > 300) {
                 //  console.log(sunLight.position.y, 'sun position AT highest');
                 renderer.setClearColor(skyColors[5]);
-                cube.material.color.setHex(skyColors[5]);
+                world.material.color.setHex(skyColors[5]);
                 sunLight.color.setHex(sunColors[0]);
                 sunMaterial.emissive.set(sunColors[0]);
             }
             else if (240 <= sunLight.position.y && sunLight.position.y < 300) {
                 //  console.log(sunLight.position.y, 'sun position AT MID');
                 renderer.setClearColor(skyColors[4]);
-                cube.material.color.setHex(skyColors[4]);
+                world.material.color.setHex(skyColors[4]);
                 sunLight.color.setHex(sunColors[1]);
                 sunMaterial.emissive.set(sunColors[1]);
             }
@@ -486,7 +533,7 @@
             else if (120 <= sunLight.position.y && sunLight.position.y < 180) {
                 // console.log(sunLight.position.y, 'sun position AT second to last lowest');
                 renderer.setClearColor(skyColors[3]);
-                cube.material.color.setHex(skyColors[3]);
+                world.material.color.setHex(skyColors[3]);
                 sunLight.color.setHex(sunColors[3]);
                 sunMaterial.emissive.set(sunColors[3]);
             }
@@ -538,7 +585,7 @@
             var treePos = new THREE.Vector3();
 
 
-           // let xPos = Math.random() * 380;
+            // let xPos = Math.random() * 380;
             let xPos = Math.random() * (380 - 5) + 5;
 
             let yPos = 100;
@@ -610,7 +657,7 @@
 
             for (let i = 0; i < 10; i++) {
                 var oakwood = new THREE.MeshPhongMaterial({ color: 0x80471C, map: loader.load("land/oakwood.jpg") });
-               
+
                 let params = new Params("F", 2, 22.5, 25, 2);
                 let rules = parseRules("F=F[+F]F[F>>][<FX]\nF=F[+F]F[+<<F][F>X]");
                 var rewriter = new Rewriter(rules);
@@ -915,7 +962,7 @@
         function render() {
             for (let i = 0; i < trees.length; i++) {
                 for (let n = 0; n < trees[i].children.length; n++) {
-                    trees[i].children[n].material.emissive.setHex(0x000000);          
+                    trees[i].children[n].material.emissive.setHex(0x000000);
                 }
             }
 
@@ -980,7 +1027,7 @@
             previousTime = time;
             renderer.render(scene, camera);
         }
-       
+
         //source: https://threejs.org/examples/webgl_multiple_views.html
         //This function updates the window width and height variables to the actual width and height of the computer
         //regardless of whether the console has been opened or not
@@ -1017,16 +1064,16 @@
             if (movement == "left") camera.translateX(-speed);
             if (movement == "backward") camera.translateZ(speed);
             if (movement == "right") camera.translateX(speed);
-           // collisionRayCaster.set(camera.position, oldCamera.position.normalize());
+            // collisionRayCaster.set(camera.position, oldCamera.position.normalize());
 
-            for (let t = 0; t < trees.length; t++){
-                if(calcPointDistance(camera.position, trees[t].position) <= 2){
+            for (let t = 0; t < trees.length; t++) {
+                if (calcPointDistance(camera.position, trees[t].position) <= 2) {
                     //  console.log(calcPointDistance(camera.position, trees[t].position));
-                        hit = true;
-                    }  
+                    hit = true;
+                }
             }
             //collisionRayCaster.intersectObjects(trees).length > 0 ||
-            if ( hit == true) {
+            if (hit == true) {
                 console.log("gets into collision");
                 if (movement == "forward") camera.translateZ(speed);
                 if (movement == "left") camera.translateX(speed);
@@ -1039,7 +1086,7 @@
                 if (movement == "left") camera.translateX(speed);
                 if (movement == "backward") camera.translateZ(-speed);
                 if (movement == "right") camera.translateX(-speed);
-                
+
             }
         };
         document.addEventListener('keydown', onDocumentKeyDown, false);
