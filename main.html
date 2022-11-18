@@ -854,6 +854,8 @@
             rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
             // check the position of the sun and moon in order to have appropriate lighting and coloring
             checkPositions(sun, moon);
+            // rotates the water plane to imitate water movement
+            water.rotateZ(.002);
             renderer.render(scene, camera);
         }
 
