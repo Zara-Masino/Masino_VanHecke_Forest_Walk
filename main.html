@@ -121,7 +121,7 @@
                 color: 0xADD8E6, //Gives specific color
                 wireframe: false,
                 side: THREE.DoubleSide, //Gives the sphere two sides so it is visible from inside and outside
-                map: loader.load("land/cloud3.jpg")
+                map: loader.load("skies/cloud3.jpg")
             }); //Textures the sphere with clouds
 
             worldMat.transparent = true; //Makes the world material halfway transparent in order to make the sky look
@@ -164,7 +164,7 @@
             waterGeom = new THREE.PlaneBufferGeometry(800, 800, 256, 256); //Creates water geom
             waterMat = new THREE.MeshPhysicalMaterial({
                 color: 0xffffff, //Sets color to white
-                map: loader.load('land/water4.jpg'), //Loads in water texture
+                map: loader.load('water/water.jpg'), //Loads in water texture
                 side: THREE.DoubleSide//Makes doublesided
             });
 
@@ -264,7 +264,7 @@
                 //Set the materials properites for the branches and leaves
                 let tree = new THREE.Object3D();
                 let branchMaterial = this.texture;
-                let leafMaterial = new THREE.MeshPhongMaterial({ color: 0x90EE90, map: loader.load("land/leaf2.jpg") });
+                let leafMaterial = new THREE.MeshPhongMaterial({ color: 0x90EE90, map: loader.load("trees/leaf2.jpg") });
                 leafMaterial.transparent = true;
                 leafMaterial.opacity = .8;
 
@@ -648,19 +648,19 @@
                 let rules;
                 //Make oak trees for 10 iterations
                 if (i < 10) {
-                    wood = new THREE.MeshPhongMaterial({ color: 0x80471C, map: loader.load("land/oakwood.jpg") });
+                    wood = new THREE.MeshPhongMaterial({ color: 0x80471C, map: loader.load("trees/oakwood.jpg") });
                     params = new Params("F", 2, 22.5, 25, 2);
                     rules = parseRules("F=F[+F]F[F>>][<FX]\nF=F[+F]F[+<<F][F>X]");
                 }
                 //Make red wood trees for the next 10 iterations
                 else if (i >= 20) {
-                    wood = new THREE.MeshPhongMaterial({ color: 0xB00000, map: loader.load("land/redwood.jpg") });
+                    wood = new THREE.MeshPhongMaterial({ color: 0xB00000, map: loader.load("trees/redwood.jpg") });
                     params = new Params("F", 3, 15, 15, 2);
                     rules = parseRules("F=F>[<+F]F[+F>]<F\nF=F>[+F^>^]F\nF=F[+F>]F>");
                 }
                 //Make birch trees for the last 10 iterations
                 else {
-                    wood = new THREE.MeshPhongMaterial({ color: 0xFFFFFF, map: loader.load("land/birch1.jpg") });
+                    wood = new THREE.MeshPhongMaterial({ color: 0xFFFFFF, map: loader.load("trees/birch1.jpg") });
                     params = new Params("F", 2, 30, 20, 2);
                     rules = parseRules("F=F[+F]F[F>>][<FX]\nF=F[+F]F[+<<F][F>X]");
                 }
