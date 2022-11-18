@@ -26,40 +26,43 @@
         camera.position.set(0, 80, 10);
         scene.add(camera);
 
-
-        let perlin = new Perlin();
+        let perlin = new Perlin(); // used for terrain generation
         let loader = new THREE.TextureLoader(); //Texture loader
         let raycaster = new THREE.Raycaster();
-        let group = new THREE.Group();
-
+        let group = new THREE.Group(); // used for the body
         let clock = new THREE.Clock();
-        let prevTime = performance.now();
-        let previousTime = performance.now(); //Gets current Delta time
 
-        let peak = 50;
+        // used in terrain generation
+        let peak = 50; 
         let smoothing = 300;
 
+        // used for movement and rotation management
         let speed = 2;
         let turnSpeed = .2;
 
+        // used for the head bobbing effect
         let change = 0;
         let sinwave = 0;
         let displacement = 0;
+
+        // used for the cursor placement
         let toggle = 0;
 
+        // used in movement and collision
         let hit = false;
         let moving = false;
 
         let intersection = null;
 
-
         let trees = [];
         let spheres = [];
         let worldItems = [];
 
+        // used in movement and collision
         let movement;
         let oldCamera;
 
+        // geometries, materials, and meshes
         let worldGeom;
         let worldMat;
         let world;
@@ -102,7 +105,6 @@
             controls.lock(); //Locks pointerlock controls upon the user clicking
         });
 
-
         //Initializes Cursor
         function initCursor() {
             cursorGeom = new THREE.SphereGeometry(0.02, 16, 16); //Creates a cursor geom
@@ -132,9 +134,6 @@
 
         }
 
-
-
-
         //Creates the sun/moon and their corresponding point lights
         function makeLights(hexCode, x, y, z, intensity) {
             renderer.setClearColor(0x000608);//Changes the color of the world to teh 
@@ -158,10 +157,6 @@
             this.bulbLight.shadow.mapSize.height = 2048;
             scene.add(this.bulbLight); //Adds point light to the scene
         }
-
-
-
-
 
         //Creates terrain and water that will appear in the scene
         function createLandAndWater() {
@@ -222,7 +217,6 @@
             worldItems.push(terrain);
         }
 
-
         //Creates sun and moon bulblights
         function createCelestials() {
             moon = new makeLights(moonColor[0], -280, -280, 0, .1);
@@ -233,8 +227,6 @@
             worldItems.push(sun.bulbLight);
             worldItems.push(moon.bulbLight);
         }
-
-
 
         //This function randomly returns a true or false value or a number between 0 and 10 in order to help randomize certain customizations
         function random() {
@@ -425,7 +417,7 @@
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
-        // A method that clones the current state
+        // A function that clones the current state
         function cloneState(state) {
             // Return the clone
             return {
@@ -439,7 +431,7 @@
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
-        // A method that creates parameters for a tree
+        // A function that creates parameters for a tree
         function Params(axiom, iterations, delta, branchLength,
             branchRadius, branchReduction, branchMinRadius) {
             this.axiom = axiom ? axiom : "F";
@@ -452,7 +444,7 @@
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
-        // A method that reads through the rules and reformats them for use
+        // A function that reads through the rules and reformats them for use
         function parseRules(rules) {
             var result = {};
             // Split on the new line
@@ -472,7 +464,7 @@
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
-        // A method that rewrites the rules
+        // A function that rewrites the rules
         function Rewriter(rules) {
 
             this.rules = rules;
@@ -505,7 +497,7 @@
         }
 
         //src: https://github.com/NekoStark/lsystem-threejs-unifi
-        // A method that chooses which portion of the rule to use based on probability
+        // A function that chooses which portion of the rule to use based on probability
         function getRule(rules) {
             var probability = rules.length;
             var choice = probability > 1 ?
@@ -514,7 +506,6 @@
             // Return which rule to use
             return rules[choice];
         }
-
 
         //Src: Taken from an example from class
         //Rotates an object on an angle around an axis 
@@ -538,7 +529,7 @@
             let moonLight = moon.bulbLight;
             let sunLight = sun.bulbLight;
             let sunMaterial = sun.bulbMat;
-            //If the moon is a specific height then modify the color of the world (sphere surrounding the terrain),
+            //If the moon is a specific height then modify the color of the renderer, the world (sphere surrounding the terrain),
             // & change the intensity of the moon
             if (moonLight.position.y > 300) {
                 renderer.setClearColor(skyColors[0]);
@@ -566,7 +557,7 @@
                 moonLight.intensity = 0;
             }
 
-            //If the sun is a specific height then modify the color of the world (sphere surrounding the terrain),
+            //If the sun is a specific height then modify the color of the renderer, the world (sphere surrounding the terrain),
             //, change the color of the sun, and change the color of the light emitting from the point light
             if (sunLight.position.y > 300) {
                 renderer.setClearColor(skyColors[5]);
@@ -599,20 +590,6 @@
             else if (sunLight.position.y < -.5) {
                 sunLight.intensity = 0;
             }
-        }
-
-        //https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
-        //The above link helped us with determining the equation we would use to calculate the distance between two
-        //points
-        //Calculates the distance between a point and a point in a shape
-        function calcDistance(point, shape) {
-            //This calculates the distance of two points based on the distance formula
-            const distance = Math.sqrt(
-                (point.x - shape.position.x) * (point.x - shape.position.x) +
-                (point.y - shape.position.y) * (point.y - shape.position.y) +
-                (point.z - shape.position.z) * (point.z - shape.position.z)
-            )
-            return distance; //Returns distance
         }
 
         //src:https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
@@ -661,20 +638,6 @@
 
             return treePos;
         }
-
-
-        // Grammar and Params 1
-        // params = new Params("F", 2, 22.5, 25, 2);
-        // rules = parseRules("F=F[+F]F[F>>][<F]\nF=F[+F]F[+<<F][F>]");
-
-        //Grammar and Params 2
-        //params = new Params("F", 3, 15, 15, 2);
-        // rules = parseRules("F=F>[<+F]F[+F>]<F\nF=F>[+F^>^]F\nF=F[+F>]F>"); 
-
-        //Grammar and Params 3
-        // params = new Params("F", 2, 15, 15, 2);
-        //rules = parseRules("F=F[+F]F[F>>][<F]\nF=F[+F]F[+<<F][F>]"); 
-        //axiom, iterations, delta, branchLength, branchRadius, branchReduction, branchMinRadius
 
         // A function that makes the trees for the scene. There are 3 types of wood and 3 grammars
         function makeTrees() {
@@ -786,6 +749,9 @@
             leftLeg.position.set(-3.3, -12, 0);
             group.add(leftLeg);
 
+
+            scene.add(group);
+
         }
 
 
@@ -795,90 +761,99 @@
             change += .2;
             sinwave = Math.sin(change);
 
-            //Creates raycaster 
+            //Creates a raycaster at the camera position that casts in the -y direction
             let ray = new THREE.Raycaster();
             var rayPos = new THREE.Vector3();
             rayPos.set(camera.position.x, camera.position.y, camera.position.z);
             var rayDir = new THREE.Vector3(0, -1, 0);
             ray.set(rayPos, rayDir);
+            // keeps track of where the ray intersects the terrain
             let intersect = ray.intersectObject(terrain);
-
+            // if the raycaster is intersecting the terrain
             if (intersect.length != 0) {
+                // if the person is moving
                 if (moving == true) {
+                    // set displacement to our sin*.2 and set the camera y to the intersection y value plus 20 and the displacement
                     displacement = sinwave * .2;
                     camera.position.y = (intersect[0].point.y + 20) + displacement * camera.position.y;
                 }
+                //otherwise the camera is just 20 above the terrain y so the camera should not bob
                 else {
                     camera.position.y = (intersect[0].point.y + 20)
                 }
             }
+            // in an edge case where the camera cannot find the terrain during loading, set the camera height to 50
             else {
                 camera.position.y = 50;
             }
 
             requestAnimationFrame(animate);
-            const time = performance.now();
+            // if the camera is locked in 
             if (controls.isLocked === true) {
-
-                const delta = (time - prevTime) / 1000;
+                // set yPos to the camera y minus 5 then set the group to the camera x z and yPos
                 let yPos = camera.position.y - 5;
                 group.position.y = (yPos);
                 group.position.z = (camera.position.z);
                 group.position.x = (camera.position.x);
-
+                // make the group rotation match the camera rotation
                 group.setRotationFromMatrix(camera.matrix);
 
             }
-
-
-            prevTime = time;
             renderer.render(scene, camera);
         }
 
-
+        // a function that is called continuously in animate that handles the cursor, hightlighting, and sun/moon rotation
         function render() {
+            //for every child of every tree, set the emissive back to normal
             for (let i = 0; i < trees.length; i++) {
                 for (let n = 0; n < trees[i].children.length; n++) {
                     trees[i].children[n].material.emissive.setHex(0x000000);
                 }
             }
+            // raycast from the camera position in the direction of the camera lookat
             raycaster.set(camera.getWorldPosition(new THREE.Vector3), camera.getWorldDirection(new THREE.Vector3));
+            // record the intersection point of the raycaster with any world item
             const intersections = raycaster.intersectObjects(worldItems, true);
+            // record the intersection point of the raycaster with any tree
             const lightTrees = raycaster.intersectObjects(trees, true);
+            // set intersections to the first item in itself if it is not null
             intersection = (intersections.length) > 0 ? intersections[0] : null;
+            // if toggle is greater than .001 and intersections is not null 
+            // toggle detects when the cursor has moved too far from the mouse
             if (toggle > 0.001 && intersection !== null) {
+                // update the position of the sphere to be at the point of the raycaster intersection
                 spheres[0].position.copy(intersection.point);
+                // scale the sphere so that the size is consistant 
+                cursor.scale.set(intersection.distance*.5,intersection.distance*.5,intersection.distance*.5 )
                 toggle = 0;
             }
-
+            // if the tree intersection array contains anything
             if (lightTrees.length > 0) {
-                let indexT;;
+                let indexT;
+                // for each child of each tree
                 for (let i = 0; i < trees.length; i++) {
                     for (let n = 0; n < trees[i].children.length; n++) {
+                        // if any of the children's id matches the id of the intersected mesh, record the tree index
                         if (trees[i].children[n].id == lightTrees[0].object.id) {
                             indexT = i;
                         }
                     }
                 }
+                // for every child of the tree at the recorded index, set the emissive to indicate highlighting
                 for (let g = 0; g < trees[indexT].children.length; g++) {
                     trees[indexT].children[g].material.emissive.setHex(0xECDBEF);
                 }
             }
-
-            let distance = calcDistance(camera.position, cursor);
-            if (distance != null) {
-                cursor.scale.set(distance * .5, distance * .5, distance * .5);
-            }
+            //increase toggle by delta
             toggle += clock.getDelta();
+            // update the size of the window if needed
             updateSize();
             requestAnimationFrame(render);
-            const time = performance.now();
-            const delta = time - previousTime;
-            // We need to translate the object back to the origin before rotating it:
+            // Rotate the sun and moon around the world 
             rotateAboutWorldAxis(sun.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
             rotateAboutWorldAxis(moon.bulbLight, new THREE.Vector3(0.0, 0.0, 1.0), turnSpeed * .005);
+            // check the position of the sun and moon in order to have appropriate lighting and coloring
             checkPositions(sun, moon);
-            previousTime = time;
             renderer.render(scene, camera);
         }
 
@@ -894,7 +869,7 @@
             }
         }
 
-       //A function which determines which way the user is moving
+        //A function which determines which way the user is moving
         function onDocumentKeyDown(e) {
             movement = 0;
             var keyCode = e.which || e.keyCode; //Gets the key code
@@ -911,7 +886,7 @@
             moving = true; //Sets the boolean whether the user was moving or not to true
             oldCamera = camera.clone(); //Create a clone of the camera
             //Translates the user using a specific speed based on which movement has been triggered
-            if (movement == "forward") camera.translateZ(-speed); 
+            if (movement == "forward") camera.translateZ(-speed);
             if (movement == "left") camera.translateX(-speed);
             if (movement == "backward") camera.translateZ(speed);
             if (movement == "right") camera.translateX(speed);
@@ -924,7 +899,7 @@
             }
             //Src: https://github.com/TovAqulic/threejs_collision_issue
             if (hit == true) { //If the user has collided with a tree then move the user in the opposite direction that
-                //the tree they collided wiht is in
+                //the tree they collided with is in
                 if (movement == "forward") camera.translateZ(speed);
                 if (movement == "left") camera.translateX(speed);
                 if (movement == "backward") camera.translateZ(-speed);
@@ -949,6 +924,7 @@
         });
 
 
+        // function calls
         initCursor();
         initWorld();
         createLandAndWater();
@@ -956,7 +932,6 @@
 
         makeTrees();
         makeBody();
-        scene.add(group);
 
         animate();
         render();
